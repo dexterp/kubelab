@@ -1,0 +1,68 @@
+# This file was autogenerate by the BETA 'packer hcl2_upgrade' command. We
+# recommend double checking that everything is correct before going forward. We
+# also recommend treating this file as disposable. The HCL2 blocks in this
+# file can be moved to other files. For example, the variable blocks could be
+# moved to their own 'variables.pkr.hcl' file, etc. Those files need to be
+# suffixed with '.pkr.hcl' to be visible to Packer. To use multiple files at
+# once they also need to be in the same folder. 'packer inspect folder/'
+# will describe to you what is in that folder.
+
+# All generated input variables will be of string type as this how Packer JSON
+# views them; you can later on change their type. Read the variables type
+# constraints documentation
+# https://www.packer.io/docs/from-1.5/variables#type-constraints for more info.
+# "timestamp" template function replacement
+locals { timestamp = regex_replace(timestamp(), "[- TZ:]", "") }
+
+# source blocks are generated from your builders; a source can be referenced in
+# build blocks. A build block runs provisioner and post-processors onto a
+# source. Read the documentation for source blocks here:
+# https://www.packer.io/docs/from-1.5/blocks/source
+source "qemu" "kubernetes_centos7" {
+  accelerator      = "kvm"
+  boot_command     = ["<tab><bs><bs><bs><bs><bs> text ks=http://{{ '{{' }} .HTTPIP {{ '}}' }}:{{ '{{' }} .HTTPPort {{ '}}' }}/ks.cfg<return>"]
+  boot_wait        = "5s"
+  disk_interface   = "virtio"
+  disk_size        = "81920M"
+  memory           = 2048
+  format           = "qcow2"
+  headless         = true
+  http_directory   = "http"
+  iso_checksum     = "sha256:087a5743dc6fd6706d9b961b8147423ddc029451b938364c760d75440eb7be14"
+  iso_url          = "http://mirror.nsw.coloau.com.au/centos/7.8.2003/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso"
+  net_device       = "virtio-net"
+  output_directory = "output"
+  shutdown_command = "/sbin/shutdown -h now"
+  ssh_port         = 22
+  ssh_username     = "root"
+  ssh_password     = "{{ env('password') }}"
+  ssh_wait_timeout = "1800s"
+  vm_name          = "kubernetes-centos-7-x86_64"
+}
+
+# a build block invokes sources and runs provisionning steps on them. The
+# documentation for build blocks can be found here:
+# https://www.packer.io/docs/from-1.5/blocks/build
+build {
+  sources = ["source.qemu.kubernetes_centos7"]
+
+  provisioner "shell" {
+    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
+    script          = "scripts/update.sh"
+  }
+
+  provisioner "shell" {
+    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
+    script          = "scripts/container_runtime.sh"
+  }
+
+  provisioner "shell" {
+    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
+    script          = "scripts/creds_sh"
+  }
+
+  provisioner "shell" {
+    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
+    script          = "scripts/cleanup.sh"
+  }
+}

@@ -1,0 +1,10 @@
+<network>
+  <name>kub-net</name>
+  <bridge name="virbr10" stp="on" delay="0"/>
+  <dns enable="no"/>
+  <ip address="192.168.115.1" netmask="255.255.255.0">
+    <dhcp>
+      <range start="192.168.115.21" end="192.168.115.254"/>
+    </dhcp>
+  </ip>
+</network>

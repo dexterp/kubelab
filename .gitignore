@@ -1,0 +1,6 @@
+config.pkr.hcl
+creds_sh
+ks.cfg
+output
+packer_cache
+tmp

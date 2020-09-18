@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+useradd -p '{{ env('userpass') }}' -m -G wheel {{ env('USER') }}
+
+# Install SSH key
+sudo -i -u dexterp /bin/bash -l <<'BASH'
+umask 077
+mkdir -p ~/.ssh
+
+umask 022
+echo '{{ env('pubkey') }}' > ~/.ssh/authorized_keys
+BASH
+
