@@ -69,7 +69,7 @@ libvirt/vm/container-runtime.xml: libvirt/vm/template.j2.xml
 
 images/container-runtime.qcow2: packer/$(BUILDOS)/config.pkr.hcl packer/$(BUILDOS)/http/ks.cfg $(wildcard packer/$(BUILDOS)/scripts/*)
 	@mkdir -p images
-	-rm -rf output
+	-rm -rf packer/centos8/output
 	cd packer/$(BUILDOS); packer build -on-error=$(PACKERONERROR) config.pkr.hcl
 	mv packer/$(BUILDOS)/output/kubernetes-$(BUILDOS)-x86_64 images/container-runtime.qcow2
 	@-test -d output && rm -rf output
