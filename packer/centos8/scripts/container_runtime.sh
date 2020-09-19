@@ -14,14 +14,17 @@ dnf install -y dnf-utils device-mapper-persistent-data fuse-overlayfs
 dnf install -y libcgroup libcgroup-tools
 dnf install -y container-selinux
 
+# Install *.repo file
+cat > /etc/yum.repos.d/docker-ce.repo <<'EOF'
+[docker-ce-stable]
+name=Docker CE Stable - $basearch
+baseurl=https://download.docker.com/linux/centos/8/$basearch/stable
+enabled=1
+gpgcheck=1
+gpgkey=https://download.docker.com/linux/centos/gpg
+EOF
 
-# Installing via RPM because the metadata is broken on these packages.
-tempdir=$(mktemp -d -t dockerrpms-XXXXXX)
-wget -qP $tempdir https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-selinux-17.03.3.ce-1.el7.noarch.rpm
-wget -qP $tempdir https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.13-3.2.el7.x86_64.rpm
-wget -qP $tempdir https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-19.03.9-3.el7.x86_64.rpm
-wget -qP $tempdir https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-cli-19.03.9-3.el7.x86_64.rpm
-rpm -Uv ${tempdir}/*.rpm
+dnf install -y containerd.io docker-ce docker-ce-cli
 
 
 mkdir -p /etc/docker
