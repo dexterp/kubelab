@@ -4,8 +4,7 @@ dotenv=$(which dotenv 2> /dev/null)
 
 if [ $? -ne 0 ]
 then
-  /bin/bash "$@"
-  exit $?
+  exec /bin/bash "$@"
 fi
 
 if [[ -f $HOME/.env ]]
@@ -23,5 +22,4 @@ then
   cmd="${cmd}dotenv -f tmp/.env run "
 fi
 
-${cmd} /bin/bash "$@"
-exit $?
+exec ${cmd} /bin/bash "$@"

@@ -1,16 +1,20 @@
 SHELL=ci/makewrap.sh
 
-.PHONY: build _build_net build_vm _build_packer _build_$(BUILDOS) clean deps envs install _install vmcreate _vmcreate vmremove vmstart
+.PHONY: build _build_net build_vm _build_ks _build_packer clean deps envs install _install vmcreate _vmcreate vmremove vmstart
 
 build: deps tmp/.env
 	# Recursive make calls to interpolate dotenv variables
 	$(MAKE) _build_packer
 	$(MAKE) _build_net
 
+_build_ks: images/centos8.qcow2
+
 _build_packer: images/container-runtime.qcow2
 
 _build_net:
 	(virsh net-info kub-net 2>/dev/null >/dev/null) || virsh net-create libvirt/network/kub-net.xml
+	virsh net-autostart kub-net
+	virsh net-start kub-net
 
 clean:
 	rm -rf tmp
@@ -67,12 +71,19 @@ requirements.txt: requirements.in
 libvirt/vm/container-runtime.xml: libvirt/vm/template.j2.xml
 	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=images/container-runtime.qcow2 j2 $< > $@
 
-images/container-runtime.qcow2: packer/$(BUILDOS)/config.pkr.hcl packer/$(BUILDOS)/http/ks.cfg $(wildcard packer/$(BUILDOS)/scripts/*)
+images/centos8.qcow2: packer/centos8/ks.pkr.hcl packer/centos8/http/ks.cfg
+	@mkdir -p images
+	-rm -rf packer/centos8/output_ks
+	cd packer/centos8; packer build -on-error=$(PACKERONERROR) ks.pkr.hcl
+	mv packer/centos8/output_ks/centos8-x86_64 images/centos8.qcow2
+	@-rm -rf output_ks
+
+images/container-runtime.qcow2: packer/centos8/config.pkr.hcl packer/centos8/http/ks.cfg $(wildcard packer/centos8/scripts/*) $(wildcard packer/centos8/network/*) $(wildcard packer/centos8/vm/*) packer/centos8/scripts/creds_sh
 	@mkdir -p images
 	-rm -rf packer/centos8/output
-	cd packer/$(BUILDOS); packer build -on-error=$(PACKERONERROR) config.pkr.hcl
-	mv packer/$(BUILDOS)/output/kubernetes-$(BUILDOS)-x86_64 images/container-runtime.qcow2
-	@-test -d output && rm -rf output
+	cd packer/centos8; packer build -on-error=$(PACKERONERROR) config.pkr.hcl
+	mv packer/centos8/output/kubernetes-centos8-x86_64 images/container-runtime.qcow2
+	@-rm -rf output
 
 %: %.j2
 	j2 $< > $@

@@ -1,8 +1,10 @@
 config.pkr.hcl
+container-runtime.xml
 creds_sh
 images
-container-runtime.xml
 ks.cfg
+ks.pkr.hcl
 output
+output_ks
 packer_cache
 tmp

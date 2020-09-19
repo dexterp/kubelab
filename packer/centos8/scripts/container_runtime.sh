@@ -59,6 +59,8 @@ mkdir -p /etc/containerd
 mv /etc/containerd/config.toml{,.bak}
 containerd config default > /etc/containerd/config.toml
 
+perl -pi -e 's/systemd_cgroup\s*=.*/systemd_cgroup = true/' /etc/containerd/config.toml
+
 cat > /etc/modules-load.d/kubernetes-cri.conf <<EOF
 overlay
 br_netfilter

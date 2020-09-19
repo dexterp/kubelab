@@ -59,6 +59,7 @@ logvol / --fstype="xfs" --name="root" --vgname="vg" --size=20480 --grow
 @standard
 device-mapper-persistent-data
 lvm2
+perl-interpreter
 
 # Exclude packages that are not needed in a VM image
 -aic94xx-firmware
@@ -86,6 +87,9 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 
 %post
 #!/bin/bash
+
+dnf update -y
+
 # Install EPEL
 rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 dnf config-manager --set-enabled PowerTools
