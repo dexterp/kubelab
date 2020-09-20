@@ -13,8 +13,8 @@ _build_packer: images/container-runtime.qcow2
 
 _build_net:
 	(virsh net-info kub-net 2>/dev/null >/dev/null) || virsh net-create libvirt/network/kub-net.xml
-	virsh net-autostart kub-net
-	virsh net-start kub-net
+	-virsh net-autostart kub-net
+	-virsh net-start kub-net
 
 clean:
 	rm -rf tmp
@@ -70,13 +70,6 @@ requirements.txt: requirements.in
 
 libvirt/vm/container-runtime.xml: libvirt/vm/template.j2.xml
 	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=images/container-runtime.qcow2 j2 $< > $@
-
-images/centos8.qcow2: packer/centos8/ks.pkr.hcl packer/centos8/http/ks.cfg
-	@mkdir -p images
-	-rm -rf packer/centos8/output_ks
-	cd packer/centos8; packer build -on-error=$(PACKERONERROR) ks.pkr.hcl
-	mv packer/centos8/output_ks/centos8-x86_64 images/centos8.qcow2
-	@-rm -rf output_ks
 
 images/container-runtime.qcow2: packer/centos8/config.pkr.hcl packer/centos8/http/ks.cfg $(wildcard packer/centos8/scripts/*) $(wildcard packer/centos8/network/*) $(wildcard packer/centos8/vm/*) packer/centos8/scripts/creds_sh
 	@mkdir -p images
