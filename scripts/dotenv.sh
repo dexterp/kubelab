@@ -22,4 +22,4 @@ then
   cmd="${cmd}dotenv -f tmp/.env run "
 fi
 
-exec ${cmd} /bin/bash "$@"
+exec ${cmd} "$@"

@@ -1,0 +1,12 @@
+[all:vars]
+# Its a lab so we use root as the user
+ansible_ssh_user=root
+
+[kubemaster]
+kubemaster1
+
+[kuberun]
+kuberun1
+kuberun2
+kuberun3
+kuberun4

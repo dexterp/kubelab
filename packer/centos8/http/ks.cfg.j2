@@ -47,7 +47,7 @@ timezone Etc/UTC --isUtc --ntpservers=_gateway
 part /boot --fstype="ext4" --size=1024
 part pv.01 --fstype="lvmpv" --grow
 volgroup vg pv.01
-logvol swap --fstype="swap" --name="swaplv" --vgname="vg" --size=4096
+logvol swap --fstype="swap" --name="swaplv" --vgname="vg" --size=128
 logvol / --fstype="xfs" --name="root" --vgname="vg" --size=20480 --grow
 # or one volume used 100% of disk space 
 # logvol / --fstype="xfs" --name=root --vgname=cl --percent=100 --grow
@@ -90,16 +90,39 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 
 dnf update -y
 
-# Install EPEL
-rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-dnf config-manager --set-enabled PowerTools
+#
+# Authorisation and Authentication
+#
 
-# Setup temporary ssh key access
+# Password-less sudo for lab
+perl -pi -e 's/^(%wheel\s+ALL=\(ALL\)\s+ALL)/# $1/' /etc/sudoers
+perl -pi -e 's/^#\s*(%wheel.+NOPASSWD)/$1/' /etc/sudoers
+
+# Setup root ssh access for ansible
 umask 077
-mkdir ~/.ssh
+mkdir /root/.ssh
+
+umask 022
+echo '{{ env('pubkey') }}' > /root/.ssh/authorized_keys
+
+# Add a same user to image
+useradd -p '{{ env('userpass') }}' -m -G wheel {{ env('USER') }}
+
+sudo -i -u {{ env('USER') }} /bin/bash -l <<'BASH'
+umask 077
+mkdir -p ~/.ssh
 
 umask 022
 echo '{{ env('pubkey') }}' > ~/.ssh/authorized_keys
+BASH
+
+#
+# Setup repositories
+#
+
+# Install EPEL
+rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+dnf config-manager --set-enabled PowerTools
 
 # Cleanup
 rm -f /root/{anaconda,original}-ks.cfg

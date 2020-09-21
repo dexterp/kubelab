@@ -4,7 +4,14 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
+ansible==2.9.13           # via -r requirements.in
+cffi==1.14.3              # via cryptography
+cryptography==3.1         # via ansible
+docopt==0.6.2             # via -r requirements.in
 j2cli==0.3.10             # via -r requirements.in
-jinja2==2.11.2            # via j2cli
+jinja2==2.11.2            # via ansible, j2cli
 markupsafe==1.1.1         # via jinja2
+pycparser==2.20           # via cffi
 python-dotenv==0.14.0     # via -r requirements.in
+pyyaml==5.3.1             # via ansible
+six==1.15.0               # via cryptography

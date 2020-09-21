@@ -1,0 +1,30 @@
+---
+# tasks file for kube-container-runtime
+
+#
+# Kubernetes join
+#
+- name: Kubernetes - Wait for Admin Init
+  wait_for:
+    path: /var/local/ansible/touch/kubeadm-init
+  delegate_to: "{{ groups['kubemaster'][0] }}"
+
+- name: Kubernetes - Join token
+  shell:
+    cmd: kubeadm token create --print-join-command
+  register: kubeadmjoincmd
+  delegate_to: "{{ groups['kubemaster'][0] }}"
+
+- set_fact:
+    kubeadmjoin: "{{ kubeadmjoincmd.stdout }} "
+
+- name: Kubernetes - Store Join Command
+  copy:
+    content: "#!/usr/bin/env bash\n\n{{ kubeadmjoin }}\n"
+    dest: /usr/local/sbin/kubeadm-join.sh
+    mode: 755
+
+- name: Kubernetes - Join Command
+  shell:
+    cmd: "kubeadm-join.sh && mkdir -p /var/local/ansible/touch/kubeadmjoin"
+    creates: /var/local/ansible/touch/kubeadmjoin

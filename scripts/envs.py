@@ -3,6 +3,9 @@ import crypt
 import sys
 import getpass
 import os
+import re
+import urllib
+import urllib.request
 import string
 
 from random import choice
@@ -35,13 +38,32 @@ if len(userpass) == 0:
     sys.exit(-1)
 
 
+page = urllib.request.urlopen('http://mirrorlist.centos.org/?repo=os&arch=x86_64&release=7')
+
+urlstr=''
+urlobj=None
+for u in page.readlines():
+    url=u.decode('utf-8').rstrip("\n")
+    urlobj=urllib.parse.urlparse(url)
+    if urlobj is not None:
+        p = re.compile(r'/[^/]+/os/x86_64/')
+        newurl = p.sub('', url)
+        chk = urllib.request.urlopen(newurl)
+        if chk.code == 200:
+            urlstr=newurl
+            break
+
+if urlstr == "":
+    raise Exception("Can not find centos base url")
+
 userpass=crypt.crypt(userpass, crypt.mksalt(crypt.METHOD_SHA512))
 
 v = {
     "password": passwd,
     "passwordcrypt": passwdcrypt,
     "pubkey": pubkey,
-    "userpass": userpass
+    "userpass": userpass,
+    "urlstr": urlstr
 }
 
 envfile=sys.argv.pop(1)
@@ -51,5 +73,6 @@ password={password}
 passwordcrypt={passwordcrypt}
 pubkey={pubkey}
 userpass={userpass}
+urlstr={urlstr}
 """.format(**v))
     fstrm.close()

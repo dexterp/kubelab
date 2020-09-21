@@ -18,18 +18,18 @@ locals { timestamp = regex_replace(timestamp(), "[- TZ:]", "") }
 # build blocks. A build block runs provisioner and post-processors onto a
 # source. Read the documentation for source blocks here:
 # https://www.packer.io/docs/from-1.5/blocks/source
-source "qemu" "kubernetes_centos8" {
+source "qemu" "centos8" {
   accelerator          = "kvm"
   boot_command         = ["<tab><bs><bs><bs><bs><bs> text ks=http://{{ '{{' }} .HTTPIP {{ '}}' }}:{{ '{{' }} .HTTPPort {{ '}}' }}/ks.cfg<return>"]
   boot_wait            = "5s"
   disk_interface       = "virtio"
-  disk_size            = "81920M"
+  disk_size            = "40G"
   memory               = 2048
   format               = "qcow2"
   headless             = true
   http_directory       = "http"
   iso_checksum         = "sha256:c87a2d81d67bbaeaf646aea5bedd70990078ec252fc52f5a7d65ff609871e255"
-  iso_url              = "http://mirror.intergrid.com.au/centos/8.2.2004/isos/x86_64/CentOS-8.2.2004-x86_64-dvd1.iso"
+  iso_url              = "{{ env('urlstr') }}/8.2.2004/isos/x86_64/CentOS-8.2.2004-x86_64-dvd1.iso"
   net_device           = "virtio-net"
   output_directory     = "output"
   shutdown_command     = "/sbin/shutdown -h now"
@@ -37,32 +37,12 @@ source "qemu" "kubernetes_centos8" {
   ssh_username         = "root"
   ssh_password         = "{{ env('password') }}"
   ssh_wait_timeout     = "1800s"
-  vm_name              = "kubernetes-centos8-x86_64"
+  vm_name              = "centos8"
 }
 
 # a build block invokes sources and runs provisionning steps on them. The
 # documentation for build blocks can be found here:
 # https://www.packer.io/docs/from-1.5/blocks/build
 build {
-  sources = ["source.qemu.kubernetes_centos8"]
-
-  provisioner "shell" {
-    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
-    script          = "scripts/update.sh"
-  }
-
-  provisioner "shell" {
-    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
-    script          = "scripts/container_runtime.sh"
-  }
-
-  provisioner "shell" {
-    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
-    script          = "scripts/creds_sh"
-  }
-
-  provisioner "shell" {
-    execute_command = "{{ '{{' }}.Vars{{ '}}' }}bash '{{ '{{' }}.Path{{ '}}' }}'"
-    script          = "scripts/cleanup.sh"
-  }
+  sources = ["source.qemu.centos8"]
 }

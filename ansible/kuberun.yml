@@ -1,0 +1,6 @@
+- hosts: kuberun
+  strategy: free
+  roles:
+    - soe
+    - kube-common
+    - kube-container-runtime

@@ -1,0 +1,181 @@
+---
+# tasks file for kube-common
+
+#
+# Kernel modules
+#
+- name: Kernel modules - overlay br_netfilter
+  copy:
+    content: |
+      overlay
+      br_netfilter
+    dest: /etc/modules-load.d/kubernetes.conf
+
+- name: Run - modprobe
+  shell:
+    cmd: "modprobe {{ item }} && mkdir -p /var/local/ansible/touch/modprobe-{{ item }}"
+    creates: "/var/local/ansible/touch/modprobe-{{ item }}"
+  loop:
+    - br_netfilter
+    - overlay
+
+#
+# sysctl.conf(s)
+#
+- sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-kubernetes.conf
+    state: present
+    reload: yes
+  loop:
+    - { key: net.bridge.bridge-nf-call-iptables, value: 1 }
+    - { key: net.bridge.bridge-nf-call-ip6tables, value: 1 }
+    - { key: net.ipv4.ip_forward, value: 1 }
+
+#
+# Repositories
+#
+- name: Repository - Docker CE
+  yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/centos/8/$basearch/stable
+    enabled: 1
+    gpgcheck: 1
+    gpgkey: https://download.docker.com/linux/centos/gpg
+
+- name: Repository - libcontainers
+  get_url:
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/devel:kubic:libcontainers:stable.repo
+    dest: /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo
+    mode: 644
+
+- name: Repository - CRI-O 
+  get_url:
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.19/CentOS_8/devel:kubic:libcontainers:stable:cri-o:1.19.repo
+    dest: /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:1.19.repo
+    mode: 644
+
+- name: Repository - Kubernetes
+  copy:
+    src: "{{ role_path }}/files/etc/yum.repos.d/kubernetes.repo"
+    dest: /etc/yum.repos.d/kubernetes.repo
+
+#
+# RPM Installations
+#
+- name: RPM Install - all
+  dnf:
+    name:
+      - device-mapper-persistent-data
+      - lvm2
+      - device-mapper-persistent-data
+      - fuse-overlayfs
+      - libcgroup
+      - libcgroup-tools
+      - container-selinux
+      - cri-o
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: latest
+
+- name: RPM Install - kubelet kubeadm kubectl
+  dnf:
+    name: ['kubelet', 'kubeadm', 'kubectl']
+    disable_excludes: kubernetes
+    state: present
+
+#
+# System configuration  
+#
+# Kubernetes CGroups doesn't handle swap well.
+# https://github.com/kubernetes/kubernetes/issues/53533
+- name: Config - /etc/fstab disable swap 
+  shell:
+    cmd: "perl -pi -e 's/^([^#]+\\sswap\\s+swap.*)/# $1/' /etc/fstab && mkdir -p /var/local/ansible/touch/swapoff-fstab"
+    creates: /var/local/ansible/touch/swapoff-fstab
+
+- name: Config - disable swap
+  shell:
+    cmd: swapoff -a && mkdir -p /var/local/ansible/touch/swapoff
+    creates: /var/local/ansible/touch/swapoff
+
+- name: Config - SELinux permissive
+  ansible.posix.selinux:
+    configfile: /etc/selinux/config
+    policy: targeted
+    state: permissive
+
+#
+# Configuration
+#
+- name: Directory - Systemd docker services
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: 755
+
+- name: Parent Dir - Container Runtimes
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/docker
+    - /etc/containerd
+
+- name: Config File - Docker
+  copy:
+    src: "{{ role_path }}/files/etc/docker/daemon.json"
+    dest: /etc/docker/daemon.json
+
+- name: Config - /etc/containerd/config.toml
+  copy:
+    src: "{{role_path}}/files/etc/containerd/config.toml"
+    dest: /etc/containerd/config.toml
+
+- name: Config - /etc/sysconfig/kubelet
+  copy:
+    content: |
+      KUBELET_EXTRA_ARGS=--feature-gates="AllAlpha=false,RunAsGroup=true" --container-runtime=remote --cgroup-driver=systemd --container-runtime-endpoint='unix:///var/run/crio/crio.sock' --runtime-request-timeout=5m
+    dest: /etc/sysconfig/kubelet
+
+#
+# Services
+#
+- name: Service - firewalld (disabled)
+  service:
+    name: firewalld
+    enabled: no
+    state: stopped
+
+- name: Service - docker (disabled)
+  service:
+    name: docker
+    enabled: no
+    state: stopped
+    daemon_reload: yes
+
+- name: Service - crio
+  service:
+    name: crio
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Service - containerd (disabled)
+  service:
+    name: containerd
+    enabled: no
+    state: stopped
+    daemon_reload: yes
+
+- name: Service - kubelet
+  service:
+    name: kubelet
+    enabled: yes
+    state: started
+    daemon_reload: yes

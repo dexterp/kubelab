@@ -1,5 +1,5 @@
 <network>
-  <name>kub-net</name>
+  <name>kubenet</name>
   <forward mode='nat'/>
   <bridge name="virbr10" stp="on" delay="0"/>
   <ip address="192.168.115.1" netmask="255.255.255.0">

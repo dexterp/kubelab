@@ -1,0 +1,47 @@
+---
+# tasks file for soe
+
+#
+# All Users here
+#
+- name: User - root (disable password)
+  user:
+    name: root
+    password: '*'
+
+- name: User - kubectl
+  user:
+    name: kubectl
+    uid: 800
+    system: True
+
+#
+# RPM Installations
+#
+- name: RPM Install - nscd
+  dnf:
+    name: nscd
+    state: latest
+
+#
+# System configuration
+#
+- name: Sysctl - vm.swappiness
+  ansible.posix.sysctl:
+    name: vm.swappiness
+    value: '1'
+
+- name: Hostname - system hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Config - /etc/nscd.conf
+  copy:
+    src: "{{role_path}}/files/etc/nscd.conf"
+    dest: /etc/nscd.conf
+  notify: Restart - nscd
+
+- name: Config - /etc/nsswitch.conf
+  copy:
+    src: "{{role_path}}/files/etc/nscd.conf"
+    dest: /etc/nsswitch.conf

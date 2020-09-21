@@ -72,7 +72,15 @@ net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 
+perl -pi -e 's/^SELINUX=.*/SELINUX=permissive/g' /etc/sysconfig/selinux
+
+useradd -r kubernetes -u 500 -m
+
+systemctl disable firewalld
+
 systemctl daemon-reload
 systemctl enable docker
-systemctl enable crio
-systemctl enable containerd
+systemctl disable crio
+systemctl disable containerd
+
+systemctl enable kubelet

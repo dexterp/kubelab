@@ -84,7 +84,7 @@
       <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x6'/>
     </controller>
     <interface type='network'>
-      <source network='kub-net'/>
+      <source network='kubenet'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
     </interface>

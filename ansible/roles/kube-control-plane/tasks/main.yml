@@ -1,0 +1,18 @@
+---
+# tasks file for kube-control-plane
+- name: Initialisation - kubeadmin --init
+  shell:
+    cmd: kubeadm init > /root/kubeadmin_init.log && mkdir -p /var/local/ansible/touch/kubeadm-init
+    creates: /var/local/ansible/touch/kubeadm-init
+
+- name: Config - kubectl (1/2)
+  file:
+    path: /root/.kube
+    state: directory
+    mode: '750'
+
+- name: Config - kubectl (2/2)
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
