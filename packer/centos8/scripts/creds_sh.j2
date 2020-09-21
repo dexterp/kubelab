@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 
+perl -pi -e 's/^%wheel\s+ALL=\(ALL\)\s+ALL/%wheel        ALL=(ALL)       NOPASSWD: ALL/' /etc/sudoers
+
 useradd -p '{{ env('userpass') }}' -m -G wheel {{ env('USER') }}
 
 # Install SSH key
-sudo -i -u dexterp /bin/bash -l <<'BASH'
+umask 077
+mkdir -p /root/.ssh
+
+umask 022
+echo '{{ env('pubkey') }}' > /root/.ssh/authorized_keys
+
+sudo -i -u {{ env('USER') }} /bin/bash -l <<'BASH'
 umask 077
 mkdir -p ~/.ssh
 
 umask 022
 echo '{{ env('pubkey') }}' > ~/.ssh/authorized_keys
 BASH
-

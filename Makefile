@@ -30,7 +30,7 @@ deps: requirements.txt
 #
 # VM Guest management
 #
-vmcreate:
+vmcreate: tmp/.env
 	$(MAKE) _vmcreate
 
 _vmcreate: libvirt/vm/container-runtime.xml images/container-runtime.qcow2

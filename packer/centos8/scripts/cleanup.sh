@@ -5,6 +5,3 @@ rm -f /etc/ssh/ssh_host*
 
 # Ensure root has no direct login password
 usermod --password '*' root
-
-# Remove authorized_keys
-rm -f /root/.ssh/authorized_keys
