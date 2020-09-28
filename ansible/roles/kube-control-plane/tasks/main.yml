@@ -2,7 +2,7 @@
 # tasks file for kube-control-plane
 - name: Initialisation - kubeadmin --init
   shell:
-    cmd: kubeadm init > /root/kubeadmin_init.log && mkdir -p /var/local/ansible/touch/kubeadm-init
+    cmd: kubeadm init > /root/kubeadmin_init.log && touch /var/local/ansible/touch/kubeadm-init
     creates: /var/local/ansible/touch/kubeadm-init
 
 - name: Config - kubectl (1/2)

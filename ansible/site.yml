@@ -1,2 +1,9 @@
-- import_playbook: kubemaster.yml
-- import_playbook: kuberun.yml
+- hosts: all
+  roles:
+    - soe
+    - role: kube-common
+      when: "'kubecluster' in group_names"
+    - role: kube-control-plane
+      when: "'kubemaster' in group_names"
+    - role: kube-container-runtime
+      when: "'kuberun' in group_names"

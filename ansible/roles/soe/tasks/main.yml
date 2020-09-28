@@ -45,3 +45,12 @@
   copy:
     src: "{{role_path}}/files/etc/nscd.conf"
     dest: /etc/nsswitch.conf
+  
+  # Touch file directory. Doesn't really belong here but SOE should be everywhere
+- name: Touch - Location for touch files (/var/local/ansible/touch)
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /var/local/ansible
+    - /var/local/ansible/touch

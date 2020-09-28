@@ -13,7 +13,7 @@
 
 - name: Run - modprobe
   shell:
-    cmd: "modprobe {{ item }} && mkdir -p /var/local/ansible/touch/modprobe-{{ item }}"
+    cmd: "modprobe {{ item }} && touch /var/local/ansible/touch/modprobe-{{ item }}"
     creates: "/var/local/ansible/touch/modprobe-{{ item }}"
   loop:
     - br_netfilter
@@ -94,12 +94,12 @@
 # https://github.com/kubernetes/kubernetes/issues/53533
 - name: Config - /etc/fstab disable swap 
   shell:
-    cmd: "perl -pi -e 's/^([^#]+\\sswap\\s+swap.*)/# $1/' /etc/fstab && mkdir -p /var/local/ansible/touch/swapoff-fstab"
+    cmd: "perl -pi -e 's/^([^#]+\\sswap\\s+swap.*)/# $1/' /etc/fstab && touch /var/local/ansible/touch/swapoff-fstab"
     creates: /var/local/ansible/touch/swapoff-fstab
 
 - name: Config - disable swap
   shell:
-    cmd: swapoff -a && mkdir -p /var/local/ansible/touch/swapoff
+    cmd: swapoff -a && touch /var/local/ansible/touch/swapoff
     creates: /var/local/ansible/touch/swapoff
 
 - name: Config - SELinux permissive

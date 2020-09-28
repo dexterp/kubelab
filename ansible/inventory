@@ -10,3 +10,7 @@ kuberun1
 kuberun2
 kuberun3
 kuberun4
+
+[kubecluster:children]
+kubemaster
+kuberun

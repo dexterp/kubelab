@@ -1,6 +1,0 @@
-- hosts: kubemaster
-  strategy: free
-  roles:
-    - soe
-    - kube-common
-    - kube-control-plane

@@ -79,7 +79,8 @@ runansible:
 tmp:
 	@mkdir -p tmp
 
-tmp/.env: scripts/envs.py tmp
+tmp/.env: scripts/envs.py
+	@$(MAKE) tmp
 	@test -x scripts/envs.py || chmod +x scripts/envs.py
 	@scripts/envs.py $@
 
