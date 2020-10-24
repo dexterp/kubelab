@@ -1,4 +1,4 @@
-# Kubernetes Qemu Setup
+# Kubernetes Qemu Installation
 
 Build a Kubernetes production environment on a single host using KVM 
 
@@ -11,7 +11,7 @@ _What will be built?_
 | kuberun3    | Kubernetes runtime     |
 | kuberun4    | Kubernetes runtime     |
 
-## Setup
+## Installation
 
 _Requirements_
 * Linux host operating system. The instructions at the time of writing are for Ubuntu 20.04
@@ -21,63 +21,99 @@ _Requirements_
 
 _Download this repository_
 ```bash
-git clone 
-cd kubelab
+$ git clone git@github.com:dexterp/kubelab.git
+$ cd kubelab
 ```
 
 _Install Libvirt_
 ```bash
-sudo apt install qemu qemu-kvm libvirt-daemon libvirt-daemon-system libvirt-clients bridge-utils virt-manager
+$ sudo apt install libvirt-clients bridge-utils libvirt-daemon \
+                   libvirt-daemon-system qemu qemu-kvmt virt-manager
 ```
 
 _Start Libvrtd_
 ```bash
-sudo systemctl start libvirtd
+$ sudo systemctl start libvirtd
 ```
 
-_Build VMs_
+_Build and start VMs_
+
 ```bash
-make vmcreate
+$ make build
 ```
 
-_Start VMs_
+_Using virsh to list vms_
+
+Once build is complete you can manage the Virtual Machines using virsh.
+
 ```bash
-make vmstart
+$ virsh list
+
+ Id   Name          State
+-----------------------------
+ 6    kuberun1      running
+ 7    kuberun2      running
+ 8    kuberun3      running
+ 9    kuberun4      running
+ 10   kubemaster1   running
 ```
 
 _Host resolution using NSS_
-This lab requires the Libvirt NSS module to resolve QEMU guests.
-More information on the libvirt module can be found at <https://libvirt.org/nss.html>.
 
-Adding the following will allow resolution of the hostname.
+In order to resolve VM guest hostnames libvirt has a NSS module which will
+automatically detect and resolve hostnames using client resolver. More
+information about libvirt NSS can be found at <https://libvirt.org/nss.html>.
+
+To resolve hostnames, install libvirt NSS .
 ```bash
-sudo apt install libnss-libvirt
+$ sudo apt install libnss-libvirt
 
 # Edit /etc/nsswitch.conf to relfect the following line
-cat /etc/nsswitch.conf
-# /etc/nsswitch.conf
+$ cat /etc/nsswitch.conf
 hosts:       files libvirt_guest dns
-# ...
+...
 ```
 
-_Check ssh connection_
+_ssh to a VM guest_
 
 The VMs need a minute or more after starting to allow NSS libvirtd time to pick up the nodes.
 Once they have appeared one can ssh directly to the host using ones username or the root account.
-The $USER(s) public key is added to both the root account or $USER.
+The $USER(s) public key is added to both the root account and the $USER account on each VM guest.
 
 SSH to the kubernetes master to test that connectivity is working
 ```bash
-ssh kubemaster1
+$ ssh kubemaster1
+
+[root@kubemaster1 ~]# 
 ```
+
+_Install Kubernetes Using Ansible_
+
+The installation of Kubernetes is installed using an ansible playbook. The Ansible playbook is under the directory `ansible/`
+
+* `ansible/site.yml` - Ansible site configuration
+* `ansible/ansible.cfg` - Ansible configuration file
+* `ansible/inventory` - Ansible inventory
+* `ansible/roles/**` - Ansible roles
+
+Run the following command to install Kubernetes using the Ansible playbook...
+```bash
+make runplaybook
+```
+
+# Managing this lab 
+
+This lab uses make, ansible, libvirt and other tools to manage the lifecycle
+of VMs in this lab. This section provides some help on these tools.
 
 ## Makefile targets
 
-* `make build`      - Build packer container runtime images
-* `make vmcreate`   - Create VMs
-* `make vmstart`    - Start VMs
-* `make runansible` - Run Ansible 
-* `make vmremove`   - Remove VMs
+* `make help`        - Print help information
+* `make build`       - Build packer container runtime images
+* `make vmcreate`    - Create VMs
+* `make vmstart`     - Start VMs
+* `make runplaybook` - Run Ansible Playbook
+* `make vmremove`    - Remove VMs
 
 ## Libvirtd commands
 
