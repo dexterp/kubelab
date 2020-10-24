@@ -2,11 +2,45 @@ SHELL=/bin/bash
 
 .PHONY: _build clean deps _vmcreate vmremove vmstart runansible
 
+# Python
+PYTHON ?= $(shell command -v python3 python|head -n1)
+
+#
+# Help Script
+#
+define PRINT_HELP_PYSCRIPT
+import re, sys
+
+print("Usage: make <target>\n")
+cmds = []
+for line in sys.stdin:
+    match = re.match(r'^_?([a-zA-Z_-]+):.*?## (.*)$$', line)
+    if match:
+      target, help = match.groups()
+      cmds.append([target, help])
+for cmd, help in cmds:
+        print("  %s%s%s - %s" % ("\x1b[0001m", cmd, "\x1b[0000m", help))
+print("")
+endef
+export PRINT_HELP_PYSCRIPT
+
+#
+# End user targets
+#
+ifneq (, ${PYTHON})
+help: ## Print Help
+	@$(PYTHON) -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+else
+help:
+	$(error python required for 'make help', executable not found)
+endif
+
+
 # USE make build - see wrapper and the end of this Makefile
-_build: deps
+_build: deps ## Build and start virtual guests
 	$(MAKE) _vmcreate
 
-clean:
+clean: ## Reset project to original state
 	rm -rf tmp
 	rm -rf packer/centos8/output
 	rm -rf packer/centos8/packer_cache
@@ -15,7 +49,7 @@ clean:
 	rm -f packer/centos8/http/ks.cfg
 	rm -f packer/centos8/kube.pkr.hcl
 
-deps: requirements.txt
+deps: requirements.txt ## Install dependencies
 	@pip install --quiet --requirement requirements.txt
 
 #
@@ -23,7 +57,7 @@ deps: requirements.txt
 #
 
 # USE make vmcreate - see wrapper and the end of this Makefile
-_vmcreate: packer/centos8/images/centos8.qcow2 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml
+_vmcreate: packer/centos8/images/centos8.qcow2 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml ## Create virtual guests
 	-virsh net-define libvirt/network/kubenet.xml
 	-virt-clone -n kuberun1 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun1.qcow2
 	-virt-clone -n kuberun2 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun2.qcow2
@@ -38,7 +72,7 @@ _vmcreate: packer/centos8/images/centos8.qcow2 libvirt/vm/kuberun.xml libvirt/vm
 	-virsh net-start kubenet
 	$(MAKE) vmstart
 
-vmremove:
+vmremove: ## Remove virtual guests
 	-virsh destroy kubemaster1
 	-virsh destroy kuberun1
 	-virsh destroy kuberun2
@@ -62,7 +96,7 @@ vmremove:
 	-ssh-keygen -R 192.168.115.13
 	-ssh-keygen -R 192.168.115.14
 
-vmstart:
+vmstart: ## Start virtual guests
 	-virsh net-start kubenet
 	-virsh start kuberun1
 	-virsh start kuberun2
@@ -70,7 +104,7 @@ vmstart:
 	-virsh start kuberun4
 	-virsh start kubemaster1
 
-runansible:
+runansible: ## Run ansible on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
 
 #
