@@ -11,6 +11,9 @@ kuberun2
 kuberun3
 kuberun4
 
+[kubectl]
+kubectl1
+
 [kubecluster:children]
 kubemaster
-kuberun
+kubectl

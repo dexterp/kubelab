@@ -7,3 +7,5 @@
       when: "'kubemaster' in group_names"
     - role: kube-container-runtime
       when: "'kuberun' in group_names"
+    - role: kube-kubectl
+      when: "'kubectl' in group_names"

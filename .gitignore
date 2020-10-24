@@ -5,6 +5,7 @@ ks.cfg
 kube.pkr.hcl
 libvirt/vm/kubemaster.xml
 libvirt/vm/kuberun.xml
+libvirt/vm/kubectl.xml
 output
 packer_cache
 tmp

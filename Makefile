@@ -57,13 +57,15 @@ deps: requirements.txt ## Install dependencies
 #
 
 # USE make vmcreate - see wrapper and the end of this Makefile
-_vmcreate: packer/centos8/images/centos8.qcow2 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml ## Create virtual guests
+_vmcreate: packer/centos8/images/centos8.qcow2 libvirt/vm/kuberun.xml libvirt/vm/kubectl.xml libvirt/vm/kubemaster.xml ## Create virtual guests
 	-virsh net-define libvirt/network/kubenet.xml
 	-virt-clone -n kuberun1 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun1.qcow2
 	-virt-clone -n kuberun2 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun2.qcow2
 	-virt-clone -n kuberun3 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun3.qcow2
 	-virt-clone -n kuberun4 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun4.qcow2
 	-virt-clone -n kubemaster1 --original-xml libvirt/vm/kubemaster.xml --file /var/lib/libvirt/images/kubemaster1.qcow2
+	-virt-clone -n kubectl1 --original-xml libvirt/vm/kubectl.xml --file /var/lib/libvirt/images/kubectl1.qcow2
+	-scripts/setstaticip.py kubectl1 kubenet 192.168.115.5
 	-scripts/setstaticip.py kubemaster1 kubenet 192.168.115.10
 	-scripts/setstaticip.py kuberun1 kubenet 192.168.115.11
 	-scripts/setstaticip.py kuberun2 kubenet 192.168.115.12
@@ -103,8 +105,9 @@ vmstart: ## Start virtual guests
 	-virsh start kuberun3
 	-virsh start kuberun4
 	-virsh start kubemaster1
+	-virsh start kubectl1
 
-runansible: ## Run ansible on virtual guests
+runplaybook: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
 
 #
@@ -121,6 +124,9 @@ tmp/.env: scripts/envs.py
 requirements.txt: requirements.in
 	@pip show pip-tools 2>&1 > /dev/null || pip install pip-tools
 	pip-compile --output-file=$@ $<
+
+libvirt/vm/kubectl.xml: libvirt/vm/template.j2.xml
+	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
 
 libvirt/vm/kuberun.xml: libvirt/vm/template.j2.xml
 	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@

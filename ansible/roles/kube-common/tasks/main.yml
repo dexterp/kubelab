@@ -34,35 +34,6 @@
     - { key: net.ipv4.ip_forward, value: 1 }
 
 #
-# Repositories
-#
-- name: Repository - Docker CE
-  yum_repository:
-    name: docker-ce-stable
-    description: Docker CE Stable - $basearch
-    baseurl: https://download.docker.com/linux/centos/8/$basearch/stable
-    enabled: 1
-    gpgcheck: 1
-    gpgkey: https://download.docker.com/linux/centos/gpg
-
-- name: Repository - libcontainers
-  get_url:
-    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/devel:kubic:libcontainers:stable.repo
-    dest: /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo
-    mode: 644
-
-- name: Repository - CRI-O 
-  get_url:
-    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.19/CentOS_8/devel:kubic:libcontainers:stable:cri-o:1.19.repo
-    dest: /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:1.19.repo
-    mode: 644
-
-- name: Repository - Kubernetes
-  copy:
-    src: "{{ role_path }}/files/etc/yum.repos.d/kubernetes.repo"
-    dest: /etc/yum.repos.d/kubernetes.repo
-
-#
 # RPM Installations
 #
 - name: RPM Install - all
