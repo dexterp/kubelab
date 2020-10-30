@@ -107,6 +107,14 @@ vmstart: ## Start virtual guests
 	-virsh start kubemaster1
 	-virsh start kubectl1
 
+vmshutdown: ## Shutdown virtual guests
+	-virsh shutdown kuberun1
+	-virsh shutdown kuberun2
+	-virsh shutdown kuberun3
+	-virsh shutdown kuberun4
+	-virsh shutdown kubemaster1
+	-virsh shutdown kubectl1
+
 runplaybook: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
 
