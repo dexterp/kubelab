@@ -22,6 +22,12 @@ _list nodes_
 $ kubectl get nodes
 ```
 
+_describe node_
+
+```bash
+$ kubectl describe nodes kuberun1
+```
+
 ## Container/Application Management
 
 ### Deploying a container application
