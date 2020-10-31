@@ -12,6 +12,7 @@
 - name: Kubernetes - Wait for Admin Init
   wait_for:
     path: /var/local/ansible/touch/kubeadm-init
+    timeout: 1200
   delegate_to: "{{ groups['kubemaster'][0] }}"
  
 - name: kubectl - get /etc/kubernetes/admin.conf

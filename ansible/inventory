@@ -16,4 +16,4 @@ kubectl1
 
 [kubecluster:children]
 kubemaster
-kubectl
+kuberun
