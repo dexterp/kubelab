@@ -39,7 +39,6 @@
 - name: RPM Install - all
   dnf:
     name:
-      - device-mapper-persistent-data
       - lvm2
       - device-mapper-persistent-data
       - fuse-overlayfs
@@ -47,9 +46,6 @@
       - libcgroup-tools
       - container-selinux
       - cri-o
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
     state: latest
 
 - name: RPM Install - kubelet kubeadm kubectl
@@ -82,32 +78,6 @@
 #
 # Configuration
 #
-- name: Directory - Systemd docker services
-  file:
-    path: /etc/systemd/system/docker.service.d
-    state: directory
-    owner: root
-    group: root
-    mode: 755
-
-- name: Parent Dir - Container Runtimes
-  file:
-    path: "{{ item }}"
-    state: directory
-  loop:
-    - /etc/docker
-    - /etc/containerd
-
-- name: Config File - Docker
-  copy:
-    src: "{{ role_path }}/files/etc/docker/daemon.json"
-    dest: /etc/docker/daemon.json
-
-- name: Config - /etc/containerd/config.toml
-  copy:
-    src: "{{role_path}}/files/etc/containerd/config.toml"
-    dest: /etc/containerd/config.toml
-
 - name: Config - /etc/sysconfig/kubelet
   copy:
     content: |
@@ -123,25 +93,11 @@
     enabled: no
     state: stopped
 
-- name: Service - docker (disabled)
-  service:
-    name: docker
-    enabled: no
-    state: stopped
-    daemon_reload: yes
-
 - name: Service - crio
   service:
     name: crio
     enabled: yes
     state: started
-    daemon_reload: yes
-
-- name: Service - containerd (disabled)
-  service:
-    name: containerd
-    enabled: no
-    state: stopped
     daemon_reload: yes
 
 - name: Service - kubelet

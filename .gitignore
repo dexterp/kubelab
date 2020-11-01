@@ -1,3 +1,4 @@
+centos7.pkr.hcl
 centos8.pkr.hcl
 creds_sh
 images

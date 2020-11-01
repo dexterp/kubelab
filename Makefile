@@ -42,12 +42,12 @@ _build: deps ## Build and start virtual guests
 
 clean: ## Reset project to original state
 	rm -rf tmp
-	rm -rf packer/centos8/output
-	rm -rf packer/centos8/packer_cache
-	rm -rf packer/centos8/images
-	rm -f packer/centos8/centos8.pkr.hcl
-	rm -f packer/centos8/http/ks.cfg
-	rm -f packer/centos8/kube.pkr.hcl
+	rm -rf packer/centos{7,8}/output
+	rm -rf packer/centos{7,8}/packer_cache
+	rm -rf packer/centos{7,8}/images
+	rm -f packer/centos{7,8}/centos{7,8}.pkr.hcl
+	rm -f packer/centos{7,8}/http/ks.cfg
+	rm -f libvirt/vm/kube*.xml
 
 deps: requirements.txt ## Install dependencies
 	@pip install --quiet --requirement requirements.txt
@@ -56,9 +56,16 @@ deps: requirements.txt ## Install dependencies
 # VM Guest management
 #
 
-_vmcreate: _centos8 ## Create virtual guests
+_vmcreate: _qemu ## Create virtual guests
 
-_centos8: packer/centos8/images/centos8.qcow2 libvirt/vm/kuberun.xml libvirt/vm/kubectl.xml libvirt/vm/kubemaster.xml
+.PHONY: _centos7
+_centos7: packer/centos7/images/centos7.qcow2
+
+.PHONY: _centos8
+_centos8: packer/centos8/images/centos8.qcow2
+
+.PHONY: _qemu
+_qemu: _centos7 libvirt/vm/kuberun.xml libvirt/vm/kubectl.xml libvirt/vm/kubemaster.xml
 	-virsh net-define libvirt/network/kubenet.xml
 	-virt-clone -n kuberun1 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun1.qcow2
 	-virt-clone -n kuberun2 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun2.qcow2
@@ -138,13 +145,13 @@ requirements.txt: requirements.in
 	pip-compile --output-file=$@ $<
 
 libvirt/vm/kubectl.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
+	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos7/images/centos7.qcow2 j2 $< > $@
 
 libvirt/vm/kuberun.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
+	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos7/images/centos7.qcow2 j2 $< > $@
 
 libvirt/vm/kubemaster.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
+	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos7/images/centos7.qcow2 j2 $< > $@
 
 packer/centos7/images/sha256sums.txt: $(wildcard packer/centos7/images/*.qcow2)
 	cd packer/centos7/images; sha256sum -b *.qcow2 > sha256sums.txt
@@ -167,18 +174,6 @@ packer/centos8/images/centos8.qcow2: packer/centos8/centos8.pkr.hcl packer/cento
 	mv packer/centos8/output/centos8 packer/centos8/images/centos8.qcow2
 	$(MAKE) packer/centos8/images/sha256sums.txt
 	@-rmdir packer/centos8/output
-
-packer/centos8/images/kubemaster.qcow2 packer/centos8/images/kuberun.qcow2: packer/centos8/images/centos8.qcow2 packer/centos8/kube.pkr.hcl $(wildcard packer/centos8/scripts/*)
-	@mkdir -p packer/centos8/images
-	@-rmdir packer/centos8/output
-	cd packer/centos8; packer build -on-error=$(PACKERONERROR) kube.pkr.hcl
-	mv packer/centos8/output/kuberun packer/centos8/images/kuberun.qcow2
-	mv packer/centos8/output/kubemaster packer/centos8/images/kubemaster.qcow2
-	$(MAKE) packer/centos8/images/sha256sums.txt
-	@-rmdir packer/centos8/output
-
-packer/centos8/kube.pkr.hcl: packer/centos8/kube.pkr.hcl.j2
-	sha256sum=$$(grep centos8.qcow2 packer/centos8/images/sha256sums.txt | cut -d ' ' -f 1) j2 $< > $@
 
 %: %.j2
 	j2 $< > $@
