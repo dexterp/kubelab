@@ -65,15 +65,13 @@ _centos7: packer/centos7/images/centos7.qcow2
 _centos8: packer/centos8/images/centos8.qcow2
 
 .PHONY: _qemu
-_qemu: _centos7 libvirt/vm/kuberun.xml libvirt/vm/kubectl.xml libvirt/vm/kubemaster.xml
+_qemu: _centos7 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml
 	-virsh net-define libvirt/network/kubenet.xml
 	-virt-clone -n kuberun1 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun1.qcow2
 	-virt-clone -n kuberun2 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun2.qcow2
 	-virt-clone -n kuberun3 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun3.qcow2
 	-virt-clone -n kuberun4 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun4.qcow2
 	-virt-clone -n kubemaster1 --original-xml libvirt/vm/kubemaster.xml --file /var/lib/libvirt/images/kubemaster1.qcow2
-	-virt-clone -n kubectl1 --original-xml libvirt/vm/kubectl.xml --file /var/lib/libvirt/images/kubectl1.qcow2
-	-scripts/setstaticip.py kubectl1 kubenet 192.168.115.5
 	-scripts/setstaticip.py kubemaster1 kubenet 192.168.115.10
 	-scripts/setstaticip.py kuberun1 kubenet 192.168.115.11
 	-scripts/setstaticip.py kuberun2 kubenet 192.168.115.12
@@ -83,13 +81,11 @@ _qemu: _centos7 libvirt/vm/kuberun.xml libvirt/vm/kubectl.xml libvirt/vm/kubemas
 	$(MAKE) vmstart
 
 vmremove: ## Remove virtual guests
-	-virsh destroy kubectl1
 	-virsh destroy kubemaster1
 	-virsh destroy kuberun1
 	-virsh destroy kuberun2
 	-virsh destroy kuberun3
 	-virsh destroy kuberun4
-	-virsh undefine kubectl1 --storage /var/lib/libvirt/images/kubectl1.qcow2
 	-virsh undefine kubemaster1 --storage /var/lib/libvirt/images/kubemaster1.qcow2
 	-virsh undefine kuberun1 --storage /var/lib/libvirt/images/kuberun1.qcow2
 	-virsh undefine kuberun2 --storage /var/lib/libvirt/images/kuberun2.qcow2
@@ -97,7 +93,6 @@ vmremove: ## Remove virtual guests
 	-virsh undefine kuberun4 --storage /var/lib/libvirt/images/kuberun4.qcow2
 	-virsh net-destroy kubenet
 	-virsh net-undefine kubenet
-	-ssh-keygen -R kubectl1
 	-ssh-keygen -R kubemaster1
 	-ssh-keygen -R kuberun1
 	-ssh-keygen -R kuberun2
@@ -116,7 +111,6 @@ vmstart: ## Start virtual guests
 	-virsh start kuberun3
 	-virsh start kuberun4
 	-virsh start kubemaster1
-	-virsh start kubectl1
 
 vmshutdown: ## Shutdown virtual guests
 	-virsh shutdown kuberun1
@@ -124,7 +118,6 @@ vmshutdown: ## Shutdown virtual guests
 	-virsh shutdown kuberun3
 	-virsh shutdown kuberun4
 	-virsh shutdown kubemaster1
-	-virsh shutdown kubectl1
 
 runplaybook: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
@@ -143,9 +136,6 @@ tmp/.env: scripts/envs.py
 requirements.txt: requirements.in
 	@pip show pip-tools 2>&1 > /dev/null || pip install pip-tools
 	pip-compile --output-file=$@ $<
-
-libvirt/vm/kubectl.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos7/images/centos7.qcow2 j2 $< > $@
 
 libvirt/vm/kuberun.xml: libvirt/vm/template.j2.xml
 	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos7/images/centos7.qcow2 j2 $< > $@
