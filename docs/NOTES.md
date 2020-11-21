@@ -450,3 +450,84 @@ spec:
           protocol: TCP
 EOF
 ```
+
+## Labels & Management
+
+### Labels
+
+#### Apply a Label
+
+_Example Test_
+
+```bash
+$ kubectl run alpaca-test \
+  --image=gcr.io/kuar-demo/kuard-amd64:green \
+  --labels="ver=2,app=alpaca,env=test"
+```
+
+_Example Prod_
+
+```bash
+$ kubectl run alpaca-prod \
+  --image=gcr.io/kuar-demo/kuard-amd64:blue \
+  --labels="ver=1,app=alpaca,env=prod"
+```
+
+_Show Labels_
+
+```bash
+$ kubectl get pods --show-labels
+NAME          READY   STATUS    RESTARTS   AGE     LABELS
+alpaca-prod   1/1     Running   0          7m12s   app=alpaca,env=prod,ver=1
+alpaca-test   1/1     Running   0          39s     app=alpaca,env=test,ver=2
+```
+
+#### Modify a Label
+
+_Apply canary Label_
+
+```bash
+$ kubectl label pods alpaca-test "canary=true"
+```
+
+_List canary Labels_
+
+```bash
+$ kubectl get pods -L canary
+NAME          READY   STATUS    RESTARTS   AGE     CANARY
+alpaca-prod   1/1     Running   0          12m     
+alpaca-test   1/1     Running   0          5m39s   true
+```
+
+_Range through label values_
+
+```bash
+$ kubectl get pods --show-labels --selector="ver in (1,2)"
+NAME          READY   STATUS    RESTARTS   AGE   LABELS
+alpaca-prod   1/1     Running   0          17m   app=alpaca,env=prod,ver=1
+alpaca-test   1/1     Running   0          10m   app=alpaca,canary=true,env=test,ver=2
+```
+
+#### Label Selectors
+
+```bash
+$ kubectl get pods --selector="ver=2"
+NAME          READY   STATUS    RESTARTS   AGE
+alpaca-test   1/1     Running   0          8m1s
+```
+
+### Annotations
+
+Annotations provide a place to store additional metadata for Kubernetes
+objects with the sole purpose of assisting tools and libraries. They are a
+way for other programs driving Kubernetes via an API to store some opaque
+data with an object. Annotations can be used for the tool itself or to pass
+configuration information between external systems.
+
+_Example Annotation_
+
+```yaml
+metadata:
+  annotations:
+    example.com/icon-url: "https://example.com/icon.png"
+```
