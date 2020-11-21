@@ -196,3 +196,257 @@ Top pods
 ```bash
 $ kubectl top pods
 ```
+
+_Autocomplete_
+
+```bash
+source <(kubectl completion bash)>
+source <(kubectl completion zsh)>
+```
+
+## Kubernetes Pods
+
+A pod is the smallest unit in a Kubernetes cluster. It contains one or more
+pods.
+
+* All containers in one pod will always end up on the same node.
+* Applications in the same Pod share the same IP address, port space and
+  hostname.
+* Applications running in the same pod can communicate over System V IPC or
+  POSIX message queues (IPC namespace).
+* Applications in different pods are isolated from each other.
+
+### The Pod Manifest
+
+The Pod manifest is a text-file representation of the Kubernetes API object.
+Kubernetes is a proponent of declarative configuration.
+
+This means that you write down the desired state of the world in a
+configuration then submit that configuration to a service transforms the
+service to the desired state.
+
+_Creating a Pod_
+
+```bash
+$ kubectl run kuard --image=gcr.io/kuar-demo/kuard-amd64:blue
+```
+
+_Delete a Pod_
+```bash
+$ kubectl delete pods/kuard
+```
+
+_Creating A Pod Manifest_
+
+Creating Pod manifests is just as simple as running docker commands.
+
+Given a docker run of...
+```bash
+$ docker run -d --name kuard \
+             --publish 8080:8080 \
+             gcr.io/kuar-demo/kuard-amd64:blue
+```
+
+The equivalent in a pod manifest is...
+```bash
+$ cat > kuard-pod.yml <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kuard
+spec:
+  containers:
+    - image: gcr.io/kuar-demo/kuard-amd64:blue
+      name: kuard
+      ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+EOF
+
+
+```
+
+### Accessing a pod
+
+_Port forward_
+
+```bash
+$ kubectl port-forward kuard 8080:8080
+```
+
+_Logs_
+
+
+```bash
+$ kubectl logs kuard [-f] [--previous]
+```
+
+* `-f` flag will follow the log
+* `--previous` print the logs from the previous instance of the container.
+
+### Running Commands in Your Container with exec
+
+```bash
+$ kubectl exec kuard date
+```
+
+```bash
+$ kubectl exec -it kuard -- /bin/bash -l
+```
+
+### Copying Files to and from Containers
+
+```bash
+$ kubectl cp <pod-name>:/captures/capture3.txt ./capture3.txt
+```
+
+```bash
+$ kubectl cp $HOME/config.txt <pod-name>:/config.txt
+```
+
+## Health Checks
+
+Kuberentes provides health checks for applications to restart them if the
+process stops working.
+
+The liveness health check runs application specific code (e.g. loading a web
+page) to verify that the application is not just still running but is
+functioning.
+
+It should be noted that Resources are requested per container, not per pod.
+
+### Liveness Probe
+
+Check if process is health and restart if not
+```bash
+$ cat > kuard-pod.yml <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kuard
+spec:
+  containers:
+  - image: gcr.io/kuar-demo/kuard-amd64:blue
+    name: kuard
+    livenessProbe:
+      httpGet:
+        path: /healthy
+        port: 8080
+        initialDelaySeconds: 5
+        timeoutSeconds: 1
+        periodSeconds: 10
+        failureThreshold: 3
+    ports:
+      - containerPort: 8080
+        name: http
+        protocol: TCP
+EOF
+```
+
+### Readiness Probe
+
+Readiness Probes are similar to liveness probes except if a check fails are
+removed from the service load balancer.
+
+### Types of Health checks
+
+* tcpSocket - Check if a tcp socket is open.
+* exec probes - Executes a script in the container. A non-zero value is a failure. 
+
+## Resource Management
+
+Kubernetes provides radical improvements in resource management due to the
+simplified distribution system. This improves resource utilization and
+becomes more cost effective due to efficiencies in sharing compute.
+
+Kubernetes allows users to specify two different resource metrics. 
+
+* Resource requests - Specify the minimum amount of a resource required to run
+  an application.
+
+* Resource limits - specify the maximum amount of a resource that an
+  application can consume.
+
+_Resource Request_
+
+Requests are used when scheduling Pods to nodes. The Kubernetes scheduler
+will ensure that the sum of all requests of all Pods on a node does not
+exceed the capacity of the node.
+
+Requests are a minium.
+
+```bash
+$ cat > kuard-pod.yml <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kuard
+spec:
+  containers:
+    - image: gcr.io/kuar-demo/kuard-amd64:blue
+      name: kuard
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "128Mi"
+      ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+EOF
+```
+
+_Resource Limits_
+
+```bash
+$ cat > kuard-pod.yml <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kuard
+spec:
+  containers:
+    - image: gcr.io/kuar-demo/kuard-amd64:blue
+      name: kuard
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "128Mi"
+        limits:
+          cpu: "1000m"
+          memory: "256Mi"
+      ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+EOF
+```
+
+### Data Persistence
+
+_Volumes_
+
+```bash
+$ cat > kuard-pod.yml <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kuard
+spec:
+  volumes:
+    - name: "kuard-datab"
+      hostPath:
+        path: "/var/lib/kuard"
+  containers:
+    - image: gcr.io/kuar-demo/kuard-amd64:blue
+      name: kuard
+      volumeMounts:
+        - mountPath: "/data"
+          name: "kuard-data"
+      ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+EOF
+```
