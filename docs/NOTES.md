@@ -531,3 +531,16 @@ metadata:
   annotations:
     example.com/icon-url: "https://example.com/icon.png"
 ```
+
+## Service Discovery
+
+### The Service Object
+
+#### DNS
+
+_DNS Debug_
+
+```
+kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
+nslookup $pod
+```
