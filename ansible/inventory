@@ -1,6 +1,7 @@
 [all:vars]
 # Its a lab so we use root as the user
 ansible_ssh_user=root
+pod_network_cidr=10.0.1.0/21
 
 [kubemaster]
 kubemaster1
