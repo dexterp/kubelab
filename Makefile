@@ -122,6 +122,10 @@ vmshutdown: ## Shutdown virtual guests
 runplaybook: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
 
+cpkubeconf: ## Copy kubectl config
+	mkdir -p ~/.kube
+	scp kubemaster1:/etc/kubernetes/admin.conf ~/.kube/config.kubelab
+
 #
 # file targets
 #

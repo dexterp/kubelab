@@ -15,7 +15,10 @@ letters=string.ascii_letters + string.digits
 passwd = ''.join([choice(letters) for i in range(10)])
 passwdcrypt = crypt.crypt(passwd, crypt.mksalt(crypt.METHOD_SHA512))
 
-p = os.path.join(os.environ.get("HOME", ""), ".ssh", "id_rsa.pub")
+p = os.environ.get("KUBELAB_PUBKEY", "")
+print(p)
+if p == "":
+    p = os.path.join(os.environ.get("HOME", ""), ".ssh", "id_rsa.pub")
 f = open(p, 'r+')
 pubkey=f.read().rstrip("\n")
 f.close()

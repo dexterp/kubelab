@@ -2,6 +2,10 @@
 # Its a lab so we use root as the user
 ansible_ssh_user=root
 pod_network_cidr=10.0.1.0/21
+# Touch files created by playbooks
+touchD=/var/local/ansible/touch
+# Store files that don't belong anywhere else
+filesD=/var/local/ansible/files
 
 [kubemaster]
 kubemaster1
@@ -11,9 +15,6 @@ kuberun1
 kuberun2
 kuberun3
 kuberun4
-
-[kubectl]
-kubectl1
 
 [kubecluster:children]
 kubemaster

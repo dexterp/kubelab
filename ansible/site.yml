@@ -1,9 +1,15 @@
 - hosts: all
   roles:
     - soe
+
     - role: kube-common
       when: "'kubecluster' in group_names"
+
     - role: kube-control-plane
       when: "'kubemaster' in group_names"
+
     - role: kube-container-runtime
       when: "'kuberun' in group_names"
+
+    - role: kube-net
+      when: "'kubemaster' in group_names"
