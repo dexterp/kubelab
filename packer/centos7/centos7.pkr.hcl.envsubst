@@ -28,8 +28,8 @@ source "qemu" "centos7" {
   format               = "qcow2"
   headless             = true
   http_directory       = "http"
-  iso_checksum         = "sha256:087a5743dc6fd6706d9b961b8147423ddc029451b938364c760d75440eb7be14"
-  iso_url              = "${urlstr}/7.8.2003/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso"
+  iso_checksum         = "sha256:e33d7b1ea7a9e2f38c8f693215dd85254c3a4fe446f93f563279715b68d07987"
+  iso_url              = "${urlstr}/7.9.2009/isos/x86_64/CentOS-7-x86_64-DVD-2009.iso"
   net_device           = "virtio-net"
   output_directory     = "output"
   shutdown_command     = "/sbin/shutdown -h now"
