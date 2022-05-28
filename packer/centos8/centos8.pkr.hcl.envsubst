@@ -28,8 +28,8 @@ source "qemu" "centos8" {
   format               = "qcow2"
   headless             = true
   http_directory       = "http"
-  iso_checksum         = "sha256:c87a2d81d67bbaeaf646aea5bedd70990078ec252fc52f5a7d65ff609871e255"
-  iso_url              = "${urlstr}/8.2.2004/isos/x86_64/CentOS-8.2.2004-x86_64-dvd1.iso"
+  iso_checksum         = "sha256:7120e48d53471713f0ec41c5193c01edcbf84843b81073b09e33925361c3adbc"
+  iso_url              = "${urlstr}/8-stream/isos/x86_64/CentOS-Stream-8-x86_64-20220525-dvd1.iso"
   net_device           = "virtio-net"
   output_directory     = "output"
   shutdown_command     = "/sbin/shutdown -h now"

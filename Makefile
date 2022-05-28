@@ -14,7 +14,7 @@ import re, sys
 print("Usage: make <target>\n")
 cmds = []
 for line in sys.stdin:
-    match = re.match(r'^_?([a-zA-Z_-]+):.*?## (.*)$$', line)
+    match = re.match(r'^_?([a-zA-Z0-9_-]+):.*?## (.*)$$', line)
     if match:
       target, help = match.groups()
       cmds.append([target, help])
@@ -52,6 +52,10 @@ clean: ## Reset project to original state
 deps: requirements.txt ## Install dependencies
 	@pip install --quiet --requirement requirements.txt
 
+upgrade: ## Install depedency upgrades
+	@touch requirements.in
+	@$(MAKE) requirements.txt
+
 #
 # VM Guest management
 #
@@ -59,18 +63,17 @@ deps: requirements.txt ## Install dependencies
 _vmcreate: _qemu ## Create virtual guests
 
 .PHONY: _centos7
-_centos7: packer/centos7/images/centos7.qcow2
+_centos7: packer/centos7/images/centos7.qcow2 ## Build Centos7 Image
 
 .PHONY: _centos8
-_centos8: packer/centos8/images/centos8.qcow2
+_centos8: packer/centos8/images/centos8.qcow2 ## Build Cenots8 Image
 
 .PHONY: _qemu
 _qemu: _centos7 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml
 	-virsh net-define libvirt/network/kubenet.xml
-	-virt-clone -n kuberun1 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun1.qcow2
-	-virt-clone -n kuberun2 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun2.qcow2
-	-virt-clone -n kuberun3 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun3.qcow2
-	-virt-clone -n kuberun4 --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/kuberun4.qcow2
+	-for host in kuberun1 kuberun2 kuberun3 kuberun4; do \
+		virt-clone -n $${host} --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
+	done
 	-virt-clone -n kubemaster1 --original-xml libvirt/vm/kubemaster.xml --file /var/lib/libvirt/images/kubemaster1.qcow2
 	-scripts/setstaticip.py kubemaster1 kubenet 192.168.115.10
 	-scripts/setstaticip.py kuberun1 kubenet 192.168.115.11
@@ -81,28 +84,17 @@ _qemu: _centos7 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml
 	$(MAKE) vmstart
 
 vmremove: ## Remove virtual guests
-	-virsh destroy kubemaster1
-	-virsh destroy kuberun1
-	-virsh destroy kuberun2
-	-virsh destroy kuberun3
-	-virsh destroy kuberun4
-	-virsh undefine kubemaster1 --storage /var/lib/libvirt/images/kubemaster1.qcow2
-	-virsh undefine kuberun1 --storage /var/lib/libvirt/images/kuberun1.qcow2
-	-virsh undefine kuberun2 --storage /var/lib/libvirt/images/kuberun2.qcow2
-	-virsh undefine kuberun3 --storage /var/lib/libvirt/images/kuberun3.qcow2
-	-virsh undefine kuberun4 --storage /var/lib/libvirt/images/kuberun4.qcow2
+	-for host in kubemaster1 kuberun1 kuberun2 kuberun3 kuberun4; do \
+		virsh destroy $${host}; \
+	done
+	-for host in kubemaster1 kuberun1 kuberun2 kuberun3 kuberun4; do \
+		virsh undefine $${host} --storage /var/lib/libvirt/images/$${host}.qcow2; \
+	done
 	-virsh net-destroy kubenet
 	-virsh net-undefine kubenet
-	-ssh-keygen -R kubemaster1
-	-ssh-keygen -R kuberun1
-	-ssh-keygen -R kuberun2
-	-ssh-keygen -R kuberun3
-	-ssh-keygen -R kuberun4
-	-ssh-keygen -R 192.168.115.10
-	-ssh-keygen -R 192.168.115.11
-	-ssh-keygen -R 192.168.115.12
-	-ssh-keygen -R 192.168.115.13
-	-ssh-keygen -R 192.168.115.14
+	-for host in kubemaster1 kuberun1 kuberun2 kuberun3 kuberun4 192.168.115.10 192.168.115.11 192.168.115.12 192.168.115.13 192.168.115.14; do \
+	   ssh-keygen -R $$host; \
+	done
 
 vmstart: ## Start virtual guests
 	-virsh net-start kubenet
@@ -119,7 +111,7 @@ vmshutdown: ## Shutdown virtual guests
 	-virsh shutdown kuberun4
 	-virsh shutdown kubemaster1
 
-runplaybook: ## Run ansible playbook on virtual guests
+run: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
 
 cpkubeconf: ## Copy kubectl config
