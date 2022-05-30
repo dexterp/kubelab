@@ -39,20 +39,26 @@
 - name: RPM Install - all
   dnf:
     name:
-      - lvm2
+      - container-selinux
       - device-mapper-persistent-data
       - fuse-overlayfs
       - libcgroup
       - libcgroup-tools
-      - container-selinux
-      - cri-o
+      - lvm2
     state: latest
 
-- name: RPM Install - kubelet kubeadm kubectl
+- name: RPM Install - docker-ce kubelet kubeadm kubectl
   dnf:
-    name: ['kubelet', 'kubeadm', 'kubectl']
-    disable_excludes: kubernetes
+    name:
+      - 'docker-ce'
+      - 'kubeadm'
+      - 'kubectl'
+      - 'kubelet'
     state: present
+
+- name: RPM Install - containerd.io
+  shell:
+    cmd: rpm -q --quiet containerd.io || dnf install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm
 
 #
 # System configuration  
@@ -84,6 +90,11 @@
       KUBELET_EXTRA_ARGS=--feature-gates="AllAlpha=false,RunAsGroup=true" --container-runtime=remote --cgroup-driver=systemd --container-runtime-endpoint='unix:///var/run/crio/crio.sock' --runtime-request-timeout=5m
     dest: /etc/sysconfig/kubelet
 
+- name: File - /etc/containerd/config.toml (remove)
+  file:
+    path: /etc/containerd/config.toml
+    state: absent
+
 #
 # Services
 #
@@ -93,12 +104,17 @@
     enabled: no
     state: stopped
 
-- name: Service - crio
+- name: Service - docker
   service:
-    name: crio
+    name: docker
     enabled: yes
     state: started
-    daemon_reload: yes
+
+- name: Service - containerd
+  service:
+    name: containerd
+    enabled: yes
+    state: started
 
 - name: Service - kubelet
   service:

@@ -69,7 +69,7 @@ _centos7: packer/centos7/images/centos7.qcow2 ## Build Centos7 Image
 _centos8: packer/centos8/images/centos8.qcow2 ## Build Cenots8 Image
 
 .PHONY: _qemu
-_qemu: _centos7 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml
+_qemu: _centos8 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml
 	-virsh net-define libvirt/network/kubenet.xml
 	-for host in kuberun1 kuberun2 kuberun3 kuberun4; do \
 		virt-clone -n $${host} --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
@@ -134,10 +134,10 @@ requirements.txt: requirements.in
 	pip-compile --output-file=$@ $<
 
 libvirt/vm/kuberun.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos7/images/centos7.qcow2 j2 $< > $@
+	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
 
 libvirt/vm/kubemaster.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos7/images/centos7.qcow2 j2 $< > $@
+	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
 
 packer/centos7/images/sha256sums.txt: $(wildcard packer/centos7/images/*.qcow2)
 	cd packer/centos7/images; sha256sum -b *.qcow2 > sha256sums.txt
