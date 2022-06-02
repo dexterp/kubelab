@@ -112,8 +112,9 @@ of VMs in this lab. This section provides some help on these tools.
 * `make build`       - Build packer container runtime images
 * `make vmcreate`    - Create VMs
 * `make vmstart`     - Start VMs
-* `make runplaybook` - Run Ansible Playbook
+* `make play`        - Run Ansible Playbook to configure kubernetes
 * `make vmremove`    - Remove VMs
+* `make getconf`     - Get Kubernetes ~/.kube/config file
 
 ## Libvirtd commands
 

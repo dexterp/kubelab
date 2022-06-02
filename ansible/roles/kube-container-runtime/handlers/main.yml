@@ -1,10 +1,5 @@
 ---
 # handlers file for kube-container-runtime
-- name: Restart - docker
-  service:
-    name: docker
-    state: restarted
-
 - name: Restart - crio
   service:
     name: crio
@@ -12,5 +7,5 @@
   
 - name: Restart - containerd
   service:
-    name: docker
+    name: containerd
     state: restarted

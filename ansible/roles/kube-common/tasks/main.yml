@@ -57,7 +57,10 @@
 
 - name: RPM Install - containerd.io
   shell:
-    cmd: rpm -q --quiet containerd.io || dnf install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm
+    cmd: dnf install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm && touch /var/local/ansible/touch/install_containerd
+    creates: /var/local/ansible/touch/install_containerd
+  args:
+    warn: false
 
 #
 # System configuration  

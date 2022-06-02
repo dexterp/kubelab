@@ -13,6 +13,8 @@
   shell:
     cmd: dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
     creates: /etc/yum.repos.d/docker-ce.repo
+  args:
+    warn: false
 
 #
 # All Users here

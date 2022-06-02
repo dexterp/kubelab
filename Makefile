@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-.PHONY: _build _centos8 clean deps _vmcreate vmremove vmstart runansible
+.PHONY: _build _centos8 clean deps _vmcreate vmremove vmstart play
 
 # Python
 PYTHON ?= $(shell command -v python3 python|head -n1)
@@ -54,7 +54,7 @@ deps: requirements.txt ## Install dependencies
 
 upgrade: ## Install depedency upgrades
 	@touch requirements.in
-	@$(MAKE) requirements.txt
+	@$(MAKE) deps
 
 #
 # VM Guest management
@@ -63,7 +63,7 @@ upgrade: ## Install depedency upgrades
 _vmcreate: _qemu ## Create virtual guests
 
 .PHONY: _centos7
-_centos7: packer/centos7/images/centos7.qcow2 ## Build Centos7 Image
+_centos7: packer/centos7/images/centos7.qcow2
 
 .PHONY: _centos8
 _centos8: packer/centos8/images/centos8.qcow2 ## Build Cenots8 Image
@@ -111,10 +111,10 @@ vmshutdown: ## Shutdown virtual guests
 	-virsh shutdown kuberun4
 	-virsh shutdown kubemaster1
 
-run: ## Run ansible playbook on virtual guests
+play: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
 
-cpkubeconf: ## Copy kubectl config
+getconf: ## Copy kubectl config to desktop/laptop
 	mkdir -p ~/.kube
 	scp kubemaster1:/etc/kubernetes/admin.conf ~/.kube/config.kubelab
 

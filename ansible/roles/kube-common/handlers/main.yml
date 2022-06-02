@@ -8,5 +8,5 @@
 
 - name: Restart - containerd
   service:
-    name: docker
+    name: containerd
     state: restarted
