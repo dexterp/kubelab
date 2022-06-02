@@ -11,5 +11,5 @@
     - role: kube-container-runtime
       when: "'kuberun' in group_names"
 
-    #- role: kube-net
-    #  when: "'kubemaster' in group_names"
+    - role: kube-net
+      when: "'kubemaster' in group_names"

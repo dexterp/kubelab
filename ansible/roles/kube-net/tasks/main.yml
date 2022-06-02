@@ -1,24 +1,6 @@
 ---
 # tasks file for kube-net
-- name: Untaint master mode - kubectl taint nodes ...
-  shell:
-    cmd: bash -c 'kubectl taint nodes kubemaster1 node-role.kubernetes.io/master-; touch {{ touchD }}/untaint'
-    creates: "{{ touchD }}/untaint"
-
-- name: Calico template
-  template:
-    src: "{{role_path}}/templates/calico.yaml.j2"
-    dest: "{{ filesD }}/calico.yaml"
-    owner: bin
-    group: wheel
-    mode: '0644'
-
-- name: Install Calico
+- name: Install Weave
   shell: 
-    cmd: kubectl apply -f {{ filesD }}/calico.yaml && touch {{ touchD }}/pod_calico
-    creates: "{{ touchD }}/install_calico"
-
-- name: Namespace kubevirt
-  shell:
-    cmd: kubectl create namespace kubevirt; touch {{ touchD }}/namespace_kubevirt
-    creates: "{{ touchD }}/namespace_kubevirt"
+    cmd: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" && touch "{{ touchD }}/install_weave"
+    creates: "{{ touchD }}/install_weave"

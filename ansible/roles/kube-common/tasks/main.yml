@@ -47,10 +47,9 @@
       - lvm2
     state: latest
 
-- name: RPM Install - docker-ce kubelet kubeadm kubectl
+- name: RPM Install - kubelet kubeadm kubectl
   dnf:
     name:
-      - 'docker-ce'
       - 'kubeadm'
       - 'kubectl'
       - 'kubelet'
@@ -87,7 +86,7 @@
 - name: Config - /etc/sysconfig/kubelet
   copy:
     content: |
-      KUBELET_EXTRA_ARGS=--feature-gates="AllAlpha=false,RunAsGroup=true" --container-runtime=remote --cgroup-driver=systemd --container-runtime-endpoint='unix:///var/run/crio/crio.sock' --runtime-request-timeout=5m
+      KUBELET_EXTRA_ARGS=
     dest: /etc/sysconfig/kubelet
 
 - name: File - /etc/containerd/config.toml (remove)
@@ -103,12 +102,6 @@
     name: firewalld
     enabled: no
     state: stopped
-
-- name: Service - docker
-  service:
-    name: docker
-    enabled: yes
-    state: started
 
 - name: Service - containerd
   service:
