@@ -15,4 +15,5 @@
   copy:
     src: /etc/kubernetes/admin.conf
     dest: /root/.kube/config
+    mode: '600'
     remote_src: yes
