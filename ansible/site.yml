@@ -13,3 +13,6 @@
 
     - role: kube-net
       when: "'kubemaster' in group_names"
+
+    - role: kube-mgmt
+      when: "'kubemaster' in group_names"
