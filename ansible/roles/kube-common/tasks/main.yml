@@ -88,11 +88,15 @@
     content: |
       KUBELET_EXTRA_ARGS=
     dest: /etc/sysconfig/kubelet
+  notify:
+    - Restart - kubelet
 
 - name: File - /etc/containerd/config.toml (remove)
   file:
     path: /etc/containerd/config.toml
     state: absent
+  notify:
+    - Restart - containerd
 
 #
 # Services
