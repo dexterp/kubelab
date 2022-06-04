@@ -6,12 +6,54 @@ A list of tasks' when working with Kubernetes
 
 ### Cluster Management
 
+_Find Control Plane Node(s)_
+
+```bash
+$ kubectl get nodes --selector=node-role.kubernetes.io/control-plane 
+$ kubectl get nodes --selector=node-role.kubernetes.io/control-plane -o json
+```
+
+_Shut down worker_
+
+```bash
+$ kubectl cordon ${node}
+$ kubectl drain ${node} --ignore-daemonsets --delete-emptydir-data
+$ systemctl stop kubelet
+$ systemctl stop containerd
+```
+
+_Shut down control plane_
+
+```bash
+$ kubectl cordon ${node}
+$ kubectl drain ${node} --ignore-daemonsets --delete-emptydir-data
+$ systemctl stop kubelet
+$ systemctl stop containerd
+``` 
+
 _Get Cluster Information_
 
 ```bash
 $ kubectl cluster-info
 Kubernetes master is running at https://192.168.115.10:6443
 KubeDNS is running at https://192.168.115.10:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+```
+
+### Certificate management
+
+_Check Expiration_
+
+```bash
+$ kubeadm certs check-expiration
+```
+
+_Renew Certificate_
+
+```bash
+# Renew certifcates
+$ kubeadm certs renew all
+# Restart pods 
+$ crictl pods --namespace kube-system --name 'kube-scheduler-*|kube-controller-manager-*|kube-apiserver-*|etcd-*' -q | /usr/bin/xargs crictl rmp -f
 ```
 
 ### Nodes
