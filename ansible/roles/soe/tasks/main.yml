@@ -33,10 +33,39 @@
 #
 # RPM Installations
 #
-- name: RPM Install - nscd
+- name: RPM Install - nscd python39
   dnf:
-    name: nscd
+    name:
+      - nscd
+      - python39
     state: latest
+
+#
+# Pip3
+#
+- name: Pip3 Install - backoff docopts
+  pip:
+    name:
+      - backoff
+      - docopts
+    executable: pip3
+    state: latest
+
+#
+# Security
+#
+
+- name: Config - SELinux permissive
+  ansible.posix.selinux:
+    configfile: /etc/selinux/config
+    policy: targeted
+    state: permissive
+
+- name: Service - firewalld (disabled)
+  service:
+    name: firewalld
+    enabled: no
+    state: stopped
 
 #
 # System configuration

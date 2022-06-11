@@ -77,12 +77,6 @@
     cmd: swapoff -a && touch /var/local/ansible/touch/swapoff
     creates: /var/local/ansible/touch/swapoff
 
-- name: Config - SELinux permissive
-  ansible.posix.selinux:
-    configfile: /etc/selinux/config
-    policy: targeted
-    state: permissive
-
 #
 # Configuration
 #
@@ -104,12 +98,6 @@
 #
 # Services
 #
-- name: Service - firewalld (disabled)
-  service:
-    name: firewalld
-    enabled: no
-    state: stopped
-
 - name: Service - containerd
   service:
     name: containerd

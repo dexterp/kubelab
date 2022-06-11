@@ -1,0 +1,38 @@
+global
+    log         127.0.0.1 local2
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        haproxy
+    group       haproxy
+    daemon
+
+    stats socket /var/lib/haproxy/stats
+
+    # utilize system-wide crypto-policies
+    ssl-default-bind-ciphers PROFILE=SYSTEM
+    ssl-default-server-ciphers PROFILE=SYSTEM
+
+defaults
+    mode    tcp
+    option  dontlognull
+    timeout http-request 10s
+    timeout queue        1m
+    timeout connect      10s
+    timeout client       86400s
+    timeout server       86400s
+    timeout tunnel       86400s
+
+frontend kube-api
+    bind {{ kube_apiserver_vip }}:{{ kube_apiserver_frontend_port }}
+    mode tcp
+    default_backend kube-api
+
+backend kube-api
+    balance roundrobin
+    mode tcp
+    option tcp-check
+    #default-server verify none check-ssl inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 5000 maxqueue 5000 weight 100
+    {% for server in kube_apiservers -%}
+    server {{ server['host'] }} {{ server['ip'] }}:{{ kube_apiserver_backend_port }} check
+    {% endfor -%}

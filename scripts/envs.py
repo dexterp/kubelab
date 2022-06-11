@@ -18,7 +18,13 @@ passwdcrypt = crypt.crypt(passwd, crypt.mksalt(crypt.METHOD_SHA512))
 p = os.environ.get("KUBELAB_PUBKEY", "")
 print(p)
 if p == "":
-    p = os.path.join(os.environ.get("HOME", ""), ".ssh", "id_rsa.pub")
+    ed25519 = os.path.join(os.environ.get("HOME", ""), ".ssh", "id_ed25519.pub")
+    rsa = os.path.join(os.environ.get("HOME", ""), ".ssh", "id_rsa.pub")
+    if os.path.exists(ed25519):
+        p = ed25519
+    else:
+        p = rsa
+
 f = open(p, 'r+')
 pubkey=f.read().rstrip("\n")
 f.close()

@@ -1,0 +1,12 @@
+---
+# handlers file for kube-lb
+- name: Restart - haproxy
+  service:
+    name: haproxy
+    state: restarted
+
+- name: Restart - keepalived
+  service:
+    name: keepalived
+    state: restarted
+    

@@ -1,8 +1,39 @@
 ---
 # tasks file for kube-control-plane
-- name: Initialization - kubeadmin init
+- name: Initialization - kubeadmin init seed
   shell:
-    cmd: kubeadm init --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log && touch {{ touchD }}/kubeadm-init
+    cmd: kubeadm init --control-plane-endpoint "{{ kube_apiserver_vip_hostname }}:{{ kube_apiserver_frontend_port }}" --upload-certs --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log && touch "{{ touchD }}/kubeadm-init"
+    creates: "{{ touchD }}/kubeadm-init"
+  delegate_to: "{{ seedmaster }}"
+
+- name: Initialization - kubeadm init phase upload-certs --upload-certs
+  shell:
+    cmd: bash -c "umask 077; kubeadm init phase upload-certs --upload-certs | tail -1 > /tmp/kubeadmin_init_phase_secret"
+    creates: /tmp/kubeadmin_init_phase_secret
+  delegate_to: "{{ seedmaster }}"
+
+- name: Initialization - cat /tmp/kubeadmin_init_phase_secret
+  shell:
+    cmd: cat /tmp/kubeadmin_init_phase_secret
+  register: kubeinitphasesecretcmd
+  delegate_to: "{{ seedmaster }}"
+
+- set_fact:
+    kubecertificatekey: "{{ kubeinitphasesecretcmd.stdout }}"
+
+- name: Kubernetes - Join token
+  shell:
+    cmd: "kubeadm token create --print-join-command && touch /var/local/ansible/touch/kubeadm-joined-{{ inventory_hostname_short }}"
+    creates: "/var/local/ansible/touch/kubeadm-joined-{{ inventory_hostname_short }}"
+  register: kubeadmjoincmd
+  delegate_to: "{{ seedmaster }}"
+
+- set_fact:
+    kubeadmjoincp: "{{ kubeadmjoincmd.stdout }} "
+
+- name: Kubernetes - Join Command
+  shell:
+    cmd: "{{ kubeadmjoincp }} --control-plane --certificate-key {{ kubecertificatekey }} && touch {{ touchD }}/kubeadm-init"
     creates: "{{ touchD }}/kubeadm-init"
 
 - name: Config - kubectl (1/2)

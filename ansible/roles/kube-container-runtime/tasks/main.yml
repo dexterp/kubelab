@@ -7,14 +7,14 @@
 - name: Kubernetes - Wait for Admin Init
   wait_for:
     path: /var/local/ansible/touch/kubeadm-init
-  delegate_to: "{{ groups['kubemaster'][0] }}"
+  delegate_to: "{{ seedmaster }}"
 
 - name: Kubernetes - Join token
   shell:
     cmd: "kubeadm token create --print-join-command && touch /var/local/ansible/touch/kubeadm-joined-{{ inventory_hostname_short }}"
     creates: "/var/local/ansible/touch/kubeadm-joined-{{ inventory_hostname_short }}"
   register: kubeadmjoincmd
-  delegate_to: "{{ groups['kubemaster'][0] }}"
+  delegate_to: "{{ seedmaster }}"
 
 - set_fact:
     kubeadmjoin: "{{ kubeadmjoincmd.stdout }} "

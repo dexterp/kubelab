@@ -1,0 +1,27 @@
+global_defs {
+    script_user root
+}
+
+vrrp_script check_apiserver {
+  script "listener_check.py {{ kube_apiserver_vip }} {{ kube_apiserver_frontend_port }}"
+  interval 5
+  weight 20
+}
+
+
+vrrp_instance apiserver-vip {
+    state {{ keepalived_state }}
+    interface {{ ansible_default_ipv4.interface }}
+    virtual_router_id {{ keepalived_virtual_router_id }}
+    priority {{ keepalived_priority }}
+    authentication {
+        auth_type PASS
+        auth_pass {{ keepalived_auth_pass }}
+    }
+    virtual_ipaddress {
+        {{ kube_apiserver_vip }}
+    }
+    track_script {
+        check_apiserver weight 20
+    }
+}

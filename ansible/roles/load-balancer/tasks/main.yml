@@ -1,0 +1,51 @@
+---
+# tasks file for kube-lb
+
+- name: RPM Install - haproxy keepalived
+  dnf:
+    name:
+      - haproxy
+      - keepalived
+    state: latest
+
+# Allows HAProxy to bind to a nonlocal IP
+- name: Sysctl - net.ipv4.ip_nonlocal_bind
+  sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: '1'
+
+- name: Config HA Proxy - listener_check.py
+  copy:
+    src: "{{role_path}}/files/usr/local/sbin/listener_check.py"
+    dest: /usr/local/sbin/listener_check.py
+    mode: 755
+
+- name: Config HA Proxy - port_check.py
+  copy:
+    src: "{{role_path}}/files/usr/local/sbin/port_check.py"
+    dest: /usr/local/sbin/port_check.py
+    mode: 755
+
+- name: Config HA Proxy - haproxy.conf
+  template:
+    src: "{{role_path}}/templates/etc/haproxy/haproxy.cfg.j2"
+    dest: /etc/haproxy/haproxy.cfg
+  notify: Restart - haproxy
+
+- name: Service - haproxy
+  service:
+    name: haproxy
+    state: started
+
+- name: Config HA Proxy - keepalived.conf
+  template:
+    src: "{{role_path}}/templates/etc/keepalived/keepalived.conf.j2"
+    dest: /etc/keepalived/keepalived.conf
+  notify: Restart - keepalived
+
+- name: Service - keepalived
+  service:
+    name: keepalived
+    state: started
+
+  

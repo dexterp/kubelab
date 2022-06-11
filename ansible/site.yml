@@ -16,3 +16,6 @@
 
     - role: kube-mgmt
       when: "'kubemaster' in group_names"
+    
+    - role: load-balancer
+      when: "'kubelb' in group_names"

@@ -7,14 +7,31 @@ touchD=/var/local/ansible/touch
 # Store files that don't belong anywhere else
 filesD=/var/local/ansible/files
 
+# Kubernetes
+kube_apiservers=[{'host': 'kubemaster1', 'ip': '192.168.115.11'}, {'host': 'kubemaster2', 'ip': '192.168.115.12'}]
+kube_apiserver_frontend_port=6443
+kube_apiserver_backend_port=6443
+kube_apiserver_vip_hostname=kubeapi
+kube_apiserver_vip=192.168.115.10
+seedmaster=kubemaster1
+
 [kubemaster]
 kubemaster1
+kubemaster2
 
 [kuberun]
 kuberun1
 kuberun2
 kuberun3
 kuberun4
+
+[kubelb]
+kubelb1 keepalived_state=MASTER keepalived_priority=10
+kubelb2 keepalived_state=BACKUP keepalived_priority=20
+
+[kubelb:vars]
+keepalived_auth_pass=password
+keepalived_virtual_router_id=1
 
 [kubecluster:children]
 kubemaster

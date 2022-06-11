@@ -69,47 +69,55 @@ _centos7: packer/centos7/images/centos7.qcow2
 _centos8: packer/centos8/images/centos8.qcow2 ## Build Cenots8 Image
 
 .PHONY: _qemu
-_qemu: _centos8 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml
+_qemu: _centos8 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml libvirt/vm/kubelb.xml
 	-virsh net-define libvirt/network/kubenet.xml
 	-for host in kuberun1 kuberun2 kuberun3 kuberun4; do \
 		virt-clone -n $${host} --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
 	done
-	-virt-clone -n kubemaster1 --original-xml libvirt/vm/kubemaster.xml --file /var/lib/libvirt/images/kubemaster1.qcow2
-	-scripts/setstaticip.py kubemaster1 kubenet 192.168.115.10
-	-scripts/setstaticip.py kuberun1 kubenet 192.168.115.11
-	-scripts/setstaticip.py kuberun2 kubenet 192.168.115.12
-	-scripts/setstaticip.py kuberun3 kubenet 192.168.115.13
-	-scripts/setstaticip.py kuberun4 kubenet 192.168.115.14
-	-virsh net-start kubenet
+	-for host in kubemaster1 kubemaster2; do \
+		virt-clone -n $${host} --original-xml libvirt/vm/kubemaster.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
+	done
+	-for host in kubelb1 kubelb2; do \
+		virt-clone -n $${host} --original-xml libvirt/vm/kubelb.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
+	done
+	-scripts/setstaticip.py kubemaster1 kubenet 192.168.115.11
+	-scripts/setstaticip.py kubemaster2 kubenet 192.168.115.12
+	-scripts/setstaticip.py kuberun1 kubenet 192.168.115.21
+	-scripts/setstaticip.py kuberun2 kubenet 192.168.115.22
+	-scripts/setstaticip.py kuberun3 kubenet 192.168.115.23
+	-scripts/setstaticip.py kuberun4 kubenet 192.168.115.24
+	-scripts/setstaticip.py kubelb1 kubenet 192.168.115.31
+	-scripts/setstaticip.py kubelb2 kubenet 192.168.115.32
+	-virsh -q net-start kubenet
 	$(MAKE) vmstart
 
 vmremove: ## Remove virtual guests
-	-for host in kubemaster1 kuberun1 kuberun2 kuberun3 kuberun4; do \
-		virsh destroy $${host}; \
+	-for host in kubemaster1 kubemaster2 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
+		virsh -q destroy $${host}; \
 	done
-	-for host in kubemaster1 kuberun1 kuberun2 kuberun3 kuberun4; do \
-		virsh undefine $${host} --storage /var/lib/libvirt/images/$${host}.qcow2; \
+	-for host in kubemaster1 kubemaster2 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
+		virsh -q undefine $${host} --storage /var/lib/libvirt/images/$${host}.qcow2; \
 	done
 	-virsh net-destroy kubenet
 	-virsh net-undefine kubenet
-	-for host in kubemaster1 kuberun1 kuberun2 kuberun3 kuberun4 192.168.115.10 192.168.115.11 192.168.115.12 192.168.115.13 192.168.115.14; do \
-	   ssh-keygen -R $$host; \
+	-for host in kubemaster1 kubemaster2 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2 192.168.115.10 192.168.115.11 192.168.115.12 192.168.115.21 192.168.115.22 192.168.115.23 192.168.115.24 192.168.115.31 192.168.115.32; do \
+	   ssh-keygen -q -R $$host; \
 	done
 
 vmstart: ## Start virtual guests
-	-virsh net-start kubenet
-	-virsh start kuberun1
-	-virsh start kuberun2
-	-virsh start kuberun3
-	-virsh start kuberun4
-	-virsh start kubemaster1
+	-virsh -q net-start kubenet
+	-for host in kuberun1 kuberun2 kuberun3 kuberun4 kubemaster1 kubemaster2 kubelb1 kubelb2; do \
+		virsh -q start $${host}; \
+	done
 
 vmshutdown: ## Shutdown virtual guests
-	-virsh shutdown kuberun1
-	-virsh shutdown kuberun2
-	-virsh shutdown kuberun3
-	-virsh shutdown kuberun4
-	-virsh shutdown kubemaster1
+	-virsh -q shutdown kuberun1
+	-virsh -q shutdown kuberun2
+	-virsh -q shutdown kuberun3
+	-virsh -q shutdown kuberun4
+	-virsh -q shutdown kubemaster1
+	-virsh -q shutdown kubelb1
+	-virsh -q shutdown kubelb2
 
 play: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
@@ -137,6 +145,9 @@ libvirt/vm/kuberun.xml: libvirt/vm/template.j2.xml
 	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
 
 libvirt/vm/kubemaster.xml: libvirt/vm/template.j2.xml
+	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
+
+libvirt/vm/kubelb.xml: libvirt/vm/template.j2.xml
 	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
 
 packer/centos7/images/sha256sums.txt: $(wildcard packer/centos7/images/*.qcow2)
