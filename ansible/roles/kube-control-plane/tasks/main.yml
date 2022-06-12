@@ -9,7 +9,7 @@
     path: /usr/bin/kubeadm
 
 # tasks file for kube-control-plane
-- name: Initialization - kubeadmin init seed
+- name: Initialization - kubeadmin init
   shell:
     cmd: kubeadm init --control-plane-endpoint "{{ kube_apiserver_vip_hostname }}:{{ kube_apiserver_frontend_port }}" --upload-certs --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log && touch "{{ touchD }}/kubeadm-init"
     creates: "{{ touchD }}/kubeadm-init"
