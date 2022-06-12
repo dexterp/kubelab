@@ -1,2 +1,3 @@
 ---
 # vars file for kube-lb
+kube_apiservers: "{{ groups['kubemaster'] }}"

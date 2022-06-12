@@ -74,7 +74,7 @@ _qemu: _centos8 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml libvirt/vm/kube
 	-for host in kuberun1 kuberun2 kuberun3 kuberun4; do \
 		virt-clone -n $${host} --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
 	done
-	-for host in kubemaster1 kubemaster2; do \
+	-for host in kubemaster1 kubemaster2 kubemaster3; do \
 		virt-clone -n $${host} --original-xml libvirt/vm/kubemaster.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
 	done
 	-for host in kubelb1 kubelb2; do \
@@ -82,6 +82,7 @@ _qemu: _centos8 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml libvirt/vm/kube
 	done
 	-scripts/setstaticip.py kubemaster1 kubenet 192.168.115.11
 	-scripts/setstaticip.py kubemaster2 kubenet 192.168.115.12
+	-scripts/setstaticip.py kubemaster3 kubenet 192.168.115.13
 	-scripts/setstaticip.py kuberun1 kubenet 192.168.115.21
 	-scripts/setstaticip.py kuberun2 kubenet 192.168.115.22
 	-scripts/setstaticip.py kuberun3 kubenet 192.168.115.23
@@ -92,21 +93,21 @@ _qemu: _centos8 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml libvirt/vm/kube
 	$(MAKE) vmstart
 
 vmremove: ## Remove virtual guests
-	-for host in kubemaster1 kubemaster2 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
+	-for host in kubemaster1 kubemaster2 kubemaster3 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
 		virsh -q destroy $${host}; \
 	done
-	-for host in kubemaster1 kubemaster2 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
+	-for host in kubemaster1 kubemaster2 kubemaster3 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
 		virsh -q undefine $${host} --storage /var/lib/libvirt/images/$${host}.qcow2; \
 	done
 	-virsh net-destroy kubenet
 	-virsh net-undefine kubenet
-	-for host in kubemaster1 kubemaster2 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2 192.168.115.10 192.168.115.11 192.168.115.12 192.168.115.21 192.168.115.22 192.168.115.23 192.168.115.24 192.168.115.31 192.168.115.32; do \
+	-for host in kubemaster1 kubemaster2 kubemaster3 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2 192.168.115.10 192.168.115.11 192.168.115.12 192.168.115.13 192.168.115.21 192.168.115.22 192.168.115.23 192.168.115.24 192.168.115.31 192.168.115.32; do \
 	   ssh-keygen -q -R $$host; \
 	done
 
 vmstart: ## Start virtual guests
 	-virsh -q net-start kubenet
-	-for host in kuberun1 kuberun2 kuberun3 kuberun4 kubemaster1 kubemaster2 kubelb1 kubelb2; do \
+	-for host in kuberun1 kuberun2 kuberun3 kuberun4 kubemaster1 kubemaster2 kubemaster3 kubelb1 kubelb2; do \
 		virsh -q start $${host}; \
 	done
 

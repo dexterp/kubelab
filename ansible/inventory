@@ -8,7 +8,6 @@ touchD=/var/local/ansible/touch
 filesD=/var/local/ansible/files
 
 # Kubernetes
-kube_apiservers=[{'host': 'kubemaster1', 'ip': '192.168.115.11'}, {'host': 'kubemaster2', 'ip': '192.168.115.12'}]
 kube_apiserver_frontend_port=6443
 kube_apiserver_backend_port=6443
 kube_apiserver_vip_hostname=kubeapi
@@ -18,6 +17,7 @@ seedmaster=kubemaster1
 [kubemaster]
 kubemaster1
 kubemaster2
+kubemaster3
 
 [kuberun]
 kuberun1

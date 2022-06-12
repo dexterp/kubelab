@@ -32,7 +32,7 @@ backend kube-api
     balance roundrobin
     mode tcp
     option tcp-check
-    #default-server verify none check-ssl inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 5000 maxqueue 5000 weight 100
-    {% for server in kube_apiservers -%}
-    server {{ server['host'] }} {{ server['ip'] }}:{{ kube_apiserver_backend_port }} check
+    default-server verify none check-ssl inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 5000 maxqueue 5000 weight 100
+    {% for host in kube_apiservers -%}
+    server {{ hostvars[host].inventory_hostname }} {{ hostvars[host].ansible_default_ipv4.address }}:{{ kube_apiserver_backend_port }} check
     {% endfor -%}

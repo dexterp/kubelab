@@ -1,4 +1,13 @@
 ---
+- name: Wait For - kubeadm install on seed host
+  wait_for:
+    path: /usr/bin/kubeadm
+  delegate_to: "{{ seedmaster }}"
+
+- name: Wait For - kubeadm install
+  wait_for:
+    path: /usr/bin/kubeadm
+
 # tasks file for kube-control-plane
 - name: Initialization - kubeadmin init seed
   shell:
@@ -15,6 +24,7 @@
 - name: Initialization - cat /tmp/kubeadmin_init_phase_secret
   shell:
     cmd: cat /tmp/kubeadmin_init_phase_secret
+    creates: "/var/local/ansible/touch/kubeadm-joined-{{ inventory_hostname_short }}"
   register: kubeinitphasesecretcmd
   delegate_to: "{{ seedmaster }}"
 
