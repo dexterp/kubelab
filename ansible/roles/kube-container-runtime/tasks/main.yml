@@ -6,7 +6,7 @@
 #
 - name: Kubernetes - Wait for Admin Init
   wait_for:
-    path: /var/local/ansible/touch/kubeadm-init
+    path: /etc/kubernetes/admin.conf
   delegate_to: "{{ seedmaster }}"
 
 - name: Kubernetes - Join token
