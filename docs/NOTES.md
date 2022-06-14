@@ -52,11 +52,17 @@ NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
 kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   6d7h
 ```
 
-### Kubernetes UI
+### Kubernetes dashbarod
 
 The final piece of the Kubernetes component is a GUI. The UI is run as a single replica, but it is still managed by a Kubernetes deployment and service.
 
 In later versions of Kubernetes the UI is not installed by default.
+
+To install navigate to the [github source](https://github.com/kubernetes/dashboard) and copy the install command to get the latest version of the dashboard
+Example
+```bash
+https://github.com/kubernetes/dashboard
+```
 
 To view the deployments
 ```bash
@@ -74,9 +80,27 @@ dashboard-metrics-scraper   ClusterIP   10.107.124.15   <none>        8000/TCP  
 kubernetes-dashboard        ClusterIP   10.98.206.245   <none>        443/TCP    7m19s
 ```
 
+_Adding a serviceaccont_
+
+Add a service account by running
+```bash
+kubectl create serviceaccount admin -n kubernetes-dashboard
+```
+
+Add to cluster role using rolebinding
+```bash
+kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:admin -n kubernetes-dashboard
+```
+
 _Viewing the UI_
 
 Kubectl can be used to access the UI.
+
+Generate a bearer token
+
+```bash
+$ kubectl -n kubernetes-dashboard create token admin-user
+```
 
 Launch the proxy
 
