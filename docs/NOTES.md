@@ -112,7 +112,11 @@ Then navigate to the URL `http://localhost:8001/api/v1/namespaces/kubernetes-das
 
 ## Common kubectl commands
 
-_Switch namespace context_
+_Accessing multiple kubernetes clusters_
+
+See [Configure Access to Multiple Clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
+
+To talk to different kubernetes clusters, a context can be set.
 
 ```bash
 $ kubectl config set-context my-context --namespace=my-namespace
