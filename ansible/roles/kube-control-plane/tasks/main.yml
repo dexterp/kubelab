@@ -29,7 +29,7 @@
 
 - name: Generate - kube-add-control.sh
   shell:
-    cmd: /usr/local/sbin/kube-gen-add-control.sh > /var/local/ansible/files/kube-add-control.sh; at now + 2h <<< 'rm -f /var/local/ansible/files/kube-add-control.sh'
+    cmd: /usr/local/sbin/kube-gen-add-control.sh > /var/local/ansible/files/kube-add-control.sh; at now + 2hour <<< 'rm -f /var/local/ansible/files/kube-add-control.sh'
     creates: /var/local/ansible/files/kube-add-control.sh
   when: inventory_hostname == seedmaster 
 

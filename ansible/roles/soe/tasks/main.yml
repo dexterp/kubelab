@@ -33,11 +33,12 @@
 #
 # RPM Installations
 #
-- name: RPM Install - nscd python39
+- name: RPM Install - nscd python39 tc
   dnf:
     name:
       - nscd
       - python39
+      - tc
     state: latest
 
 #
