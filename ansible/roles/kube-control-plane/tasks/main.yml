@@ -57,6 +57,12 @@
     mode: '700'
   when: inventory_hostname != seedmaster 
 
+- name: Wait - kubeadmin init seedmaster port
+  wait_for:
+    host: 0.0.0.0
+    port: 6443
+  delegate_to: "{{ seedmaster }}"
+
 - name: Initialization - kubeadm init
   shell:
     cmd: /usr/local/sbin/kube-add-control.sh

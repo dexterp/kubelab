@@ -19,6 +19,12 @@
 - set_fact:
     kubeadmjoin: "{{ kubeadmjoincmd.stdout }} "
 
+- name: Wait - kubeadmin init seedmaster port
+  wait_for:
+    host: 0.0.0.0
+    port: 6443
+  delegate_to: "{{ seedmaster }}"
+
 - name: Kubernetes - Join Command
   shell:
     cmd: "{{ kubeadmjoin }} && touch /var/local/ansible/touch/kubeadm-join"
