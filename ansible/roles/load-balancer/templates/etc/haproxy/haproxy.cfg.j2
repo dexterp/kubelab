@@ -24,7 +24,7 @@ defaults
     timeout tunnel       86400s
 
 frontend kube-api
-    bind {{ kube_apiserver_vip }}:{{ kube_apiserver_frontend_port }}
+    bind {{ kube_apiserver_vip }}:{{ kube_apiserver_vip_port }}
     mode tcp
     default_backend kube-api
 
@@ -34,5 +34,5 @@ backend kube-api
     option tcp-check
     default-server verify none check-ssl inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 5000 maxqueue 5000 weight 100
     {% for host in kube_apiservers -%}
-    server {{ hostvars[host].inventory_hostname }} {{ hostvars[host].ansible_default_ipv4.address }}:{{ kube_apiserver_backend_port }} check
+    server {{ hostvars[host].inventory_hostname }} {{ hostvars[host].ansible_default_ipv4.address }}:{{ kube_apiserver_port }} check
     {% endfor -%}

@@ -8,10 +8,10 @@ touchD=/var/local/ansible/touch
 filesD=/var/local/ansible/files
 
 # Kubernetes
-kube_apiserver_frontend_port=6443
-kube_apiserver_backend_port=6443
+kube_apiserver_port=6443
 kube_apiserver_vip_hostname=kubeapi
 kube_apiserver_vip=192.168.115.10
+kube_apiserver_vip_port=6443
 seedmaster=kubemaster1
 
 [kubemaster]

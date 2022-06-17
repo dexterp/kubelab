@@ -11,7 +11,7 @@
 # tasks file for kube-control-plane
 - name: Initialization - kubeaadm init seedmaster
   shell:
-    cmd: kubeadm init --control-plane-endpoint "{{ kube_apiserver_vip_hostname }}:{{ kube_apiserver_frontend_port }}" --upload-certs --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log
+    cmd: kubeadm init --apiserver-bind-port {{ kube_apiserver_port }} --control-plane-endpoint "{{ kube_apiserver_vip_hostname }}:{{ kube_apiserver_vip_port }}" --upload-certs --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log
     creates: "/etc/kubernetes/admin.conf"
   when: inventory_hostname == seedmaster 
 
@@ -29,26 +29,21 @@
 
 - name: Generate - kube-add-control.sh
   shell:
-    cmd: /usr/local/sbin/kube-gen-add-control.sh > /var/local/ansible/files/kube-add-control.sh; at now + 2hour <<< 'rm -f /var/local/ansible/files/kube-add-control.sh'
-    creates: /var/local/ansible/files/kube-add-control.sh
+    cmd: bash -c "umask 077; bash /usr/local/sbin/kube-gen-add-control.sh /var/local/ansible/files/kube-add-control.sh"
+    creates: "/var/local/ansible/files/kube-add-control.sh"
   when: inventory_hostname == seedmaster 
 
-- name: Wait - kube-add-control.sh
+- name: Wait - kube-add-contro.sh
   wait_for:
     path: /var/local/ansible/files/kube-add-control.sh
   delegate_to: "{{ seedmaster }}"
 
 - name: Fetch - kube-add-control.sh
   fetch:
-    src: /var/local/ansible/files/kube-add-control.sh
+    src: "/var/local/ansible/files/kube-add-control.sh"
     dest: /tmp/
     flat: true
-  when: inventory_hostname == seedmaster 
-
-- name: Wait - kube-add-control.sh
-  wait_for:
-    path: /tmp/kube-add-control.sh
-  delegate_to: localhost
+  delegate_to: "{{ seedmaster }}"
 
 - name: Copy - kube-add-control.sh
   copy:
@@ -61,6 +56,7 @@
   wait_for:
     host: 0.0.0.0
     port: 6443
+    timeout: 1800
   delegate_to: "{{ seedmaster }}"
 
 - name: Initialization - kubeadm init

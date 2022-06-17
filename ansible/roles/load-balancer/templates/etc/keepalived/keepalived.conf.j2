@@ -3,7 +3,7 @@ global_defs {
 }
 
 vrrp_script check_apiserver {
-  script "listener_check.py {{ kube_apiserver_vip }} {{ kube_apiserver_frontend_port }}"
+  script "listener_check.py {{ kube_apiserver_vip }} {{ kube_apiserver_vip_port }}"
   interval 5
   weight 20
 }
