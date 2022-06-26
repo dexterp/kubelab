@@ -1,0 +1,25 @@
+---
+# tasks file for kube-dashboard
+- name: Copy - Dashboard defintion
+  copy:
+    src: "{{role_path}}/files/"
+    dest: "/var/local/ansible/files/kube-dashboard"
+  when: inventory_hostname == seedmaster
+
+- name: Install - Dashboard
+  shell:
+    cmd: kubectl apply -f /var/local/ansible/files/kube-dashboard/recommended-v2.5.0.yaml && touch "{{touchD}}/dashboard-install"
+    creates: "{{touchD}}/dashboard-install"
+  when: inventory_hostname == seedmaster
+
+- name: Install - Dashboard Service Account
+  shell:
+    cmd: kubectl apply -f /var/local/ansible/files/kube-dashboard/serviceaccount.yml && touch "{{touchD}}/dashboard-serviceaccount"
+    creates: "{{touchD}}/dashboard-serviceaccount"
+  when: inventory_hostname == seedmaster
+
+- name: Install - Dashboard Cluster Role Binding
+  shell:
+    cmd: kubectl apply -f /var/local/ansible/files/kube-dashboard/clusterrolebinding.yml && touch "{{touchD}}/dashboard-clusterrolebinding"
+    creates: "{{touchD}}/dashboard-clusterrolebinding"
+  when: inventory_hostname == seedmaster

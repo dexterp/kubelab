@@ -1,11 +1,10 @@
 #version=RHEL8
-install
 {% if env('KS_MEDIA') == "cdrom" %}
 # Use CDROM installation media
 cdrom
 {% elif env('KS_MEDIA') == "url" %}
 # Use URL installation media
-url --url="http://mirror.nsw.coloau.com.au/centos/8.2.2004/BaseOS/x86_64/os"
+url --url="{{ env('urlstr') }}/8.2.2004/BaseOS/x86_64/os"
 {% endif %}
 #ignoredisk --only-use=vda
 
@@ -60,6 +59,7 @@ logvol / --fstype="xfs" --name="root" --vgname="vg" --size=20480 --grow
 device-mapper-persistent-data
 lvm2
 perl-interpreter
+python3
 
 # Exclude packages that are not needed in a VM image
 -aic94xx-firmware
@@ -89,6 +89,14 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 #!/bin/bash
 
 dnf update -y
+
+#
+# Saltstack dependencies
+#
+rpm --import https://repo.saltproject.io/py3/redhat/8/x86_64/latest/SALTSTACK-GPG-KEY.pub
+wget https://repo.saltproject.io/py3/redhat/8/x86_64/latest.repo -O /etc/yum.repos.d/salt.repo
+dnf install -y salt-minion
+mkdir -p /srv/salt
 
 #
 # Authorisation and Authentication

@@ -1,0 +1,7 @@
+---
+# tasks file for kube-ingress-controller
+- name: Apply - Ingress Controller definition
+  shell:
+    cmd: helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace && touch "{{touchD}}/ingress-controller"
+    creates: "{{touchD}}/ingress-controller"
+  when: inventory_hostname == seedmaster

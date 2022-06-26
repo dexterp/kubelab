@@ -17,5 +17,11 @@
     - role: kube-mgmt
       when: "'kubemaster' in group_names"
     
+    - role: kube-dashboard
+      when: "'kubemaster' in group_names"
+
+    - role: kube-ingress-controller
+      when: "'kubemaster' in group_names"
+    
     - role: load-balancer
       when: "'kubelb' in group_names"
