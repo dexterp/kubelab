@@ -1,0 +1,13 @@
+---
+# tasks file for certmanager
+- name: Install - kubernetes definition files
+  copy:
+    src: "{{role_path}}/files/"
+    dest: "{{filesD}/{{role_name}}"
+  when: inventory_hostname == seedmaster
+
+- name: Install - certmanager
+  shell:
+    cmd: kubectl apply -f "{{role_path}}/files/certmanager/cert-manager.yaml && touch {{touchD}/cert-manager-install"
+    creates: "{{touchD}}/cert-manager-install"
+  when: inventory_hostname == seedmaster
