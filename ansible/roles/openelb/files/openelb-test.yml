@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openelb-test
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openelb-test
+  namespace: openelb-test
+spec:
+  selector:
+    matchLabels:
+      app: openelb-test
+  template:
+    metadata:
+      labels:
+        app: openelb-test
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: network.kubesphere.io/v1alpha2
+kind: Eip
+metadata:
+    name: openelb-test-eip
+spec:
+    address: 192.168.115.129
+    protocol: layer2
+    interface: enp1s0
+    disable: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openelb-test
+  namespace: openelb-test
+  annotations:
+    lb.kubesphere.io/v1alpha1: openelb
+    protocol.openelb.kubesphere.io/v1alpha1: layer2
+    eip.openelb.kubesphere.io/v1alpha2: openelb-test-eip
+spec:
+  selector:
+    app: openelb-test
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

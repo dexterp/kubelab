@@ -3,23 +3,29 @@
 - name: Copy - Dashboard defintion
   copy:
     src: "{{role_path}}/files/"
-    dest: "/var/local/ansible/files/kube-dashboard"
+    dest: "{{filesD}}/{{role_name}}"
   when: inventory_hostname == seedmaster
 
 - name: Install - Dashboard
   shell:
-    cmd: kubectl apply -f /var/local/ansible/files/kube-dashboard/recommended-v2.5.0.yaml && touch "{{touchD}}/dashboard-install"
+    cmd: kubectl apply -f {{filesD}}/{{role_name}}/recommended-v2.5.0.yaml && touch "{{touchD}}/dashboard-install"
     creates: "{{touchD}}/dashboard-install"
   when: inventory_hostname == seedmaster
 
 - name: Install - Dashboard Service Account
   shell:
-    cmd: kubectl apply -f /var/local/ansible/files/kube-dashboard/serviceaccount.yml && touch "{{touchD}}/dashboard-serviceaccount"
-    creates: "{{touchD}}/dashboard-serviceaccount"
+    cmd: kubectl apply -f {{filesD}}/{{role_name}}/svcacct-admin.yml && touch "{{touchD}}/kube-dashboard-svcacct"
+    creates: "{{touchD}}/kube-dashboard-svcacct"
   when: inventory_hostname == seedmaster
 
 - name: Install - Dashboard Cluster Role Binding
   shell:
-    cmd: kubectl apply -f /var/local/ansible/files/kube-dashboard/clusterrolebinding.yml && touch "{{touchD}}/dashboard-clusterrolebinding"
-    creates: "{{touchD}}/dashboard-clusterrolebinding"
+    cmd: kubectl apply -f {{filesD}}/{{role_name}}/clusterrolebinding-admin.yml && touch "{{touchD}}/kube-dashboard-clusterrolebinding"
+    creates: "{{touchD}}/kube-dashboard-clusterrolebinding"
+  when: inventory_hostname == seedmaster
+
+- name: Dasbhoard - LoadBalancing
+  shell:
+    cmd: kubectl apply -f "{{filesD}}/{{role_name}}/svc-lb.yml" && touch "{{touchD}}/{{role_name}}-svc-lb"
+    creates: "{{touchD}}/{{role_name}}-svc-lb"
   when: inventory_hostname == seedmaster

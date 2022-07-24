@@ -1,0 +1,33 @@
+---
+# tasks file for openelb
+
+- name: Copy Files
+  copy:
+    src: "{{role_path}}/files/"
+    dest: "{{filesD}}/{{role_name}}"
+  when: inventory_hostname == seedmaster
+
+- name: OpenELB
+  shell:
+    cmd: kubectl apply -f "{{filesD}}/{{role_name}}/openelb.yml" && touch "{{touchD}}/openelb"
+    creates: "{{touchD}}/openelb"
+  when: inventory_hostname == seedmaster
+
+- name: KubeProxy - Strict Arp
+  shell:
+    cmd: |
+      EDITOR="perl -pi -e 's/strictARP: false/strictARP: true/'" kubectl edit configmap kube-proxy -n kube-system && touch "{{touchD}}/kube-proxy-strictarp"
+    creates: touch "{{touchD}}/kube-proxy-strictarp"
+  when: inventory_hostname == seedmaster
+
+- name: KubeProxy - Rolling Restart
+  shell:
+    cmd: kubectl rollout restart daemonset kube-proxy -n kube-system && touch "{{touchD}}/kube-proxy-strictarp-restart"
+    creates: "{{touchD}}/kube-proxy-strictarp-restart"
+  when: inventory_hostname == seedmaster
+
+- name: OpenELB - Test Server
+  shell:
+    cmd: kubectl apply -f "{{filesD}}/{{role_name}}/openelb-test.yml" && touch "{{touchD}}/{{role_name}}-test"
+    creates: "{{touchD}}/{{role_name}}-test"
+  when: inventory_hostname == seedmaster

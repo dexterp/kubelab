@@ -1,0 +1,28 @@
+---
+apiVersion: network.kubesphere.io/v1alpha2
+kind: Eip
+metadata:
+    name: kubernetes-dashboard-eip
+spec:
+    address: 192.168.115.130
+    protocol: layer2
+    interface: enp1s0
+    disable: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-dashboard-lb
+  namespace: kubernetes-dashboard
+  annotations:
+    lb.kubesphere.io/v1alpha1: openelb
+    protocol.openelb.kubesphere.io/v1alpha1: layer2
+    eip.openelb.kubesphere.io/v1alpha2: kubernetes-dashboard-eip
+spec:
+  selector:
+    k8s-app: kubernetes-dashboard
+  type: LoadBalancer
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8443
