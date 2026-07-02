@@ -1,0 +1,18 @@
+<network>
+  <name>{{ name }}</name>
+  <forward mode='{{ forward_mode | default("nat") }}'>
+    <nat>
+      <port start='{{ nat_port_start | default("1024") }}' end='{{ nat_port_end | default("65535") }}'/>
+    </nat>
+  </forward>
+  <bridge name='{{ bridge_name }}' stp='{{ bridge_stp | default("on") }}' delay='{{ bridge_delay | default("0") }}'/>
+  <mac address='{{ mac_address }}'/>
+  <domain name='{{ domain_name }}' localOnly='yes'/>
+  <ip address='{{ ip_address }}' netmask='{{ netmask }}'>
+    <dhcp>
+      <range start='{{ dhcp_range_start }}' end='{{ dhcp_range_end }}'/>
+{% for host in hosts %}
+      <host name='{{ host.fqdn }}' ip='{{ host.ip }}' mac='{{ host.mac }}' />
+{% endfor %}  </dhcp>
+  </ip>
+</network>

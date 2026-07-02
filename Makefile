@@ -36,18 +36,12 @@ help:
 endif
 
 
-# USE make build - see wrapper and the end of this Makefile
-_build: deps ## Build and start virtual guests
-	$(MAKE) _vmcreate
-
 clean: ## Reset project to original state
 	rm -rf tmp
-	rm -rf packer/centos{7,8}/output
-	rm -rf packer/centos{7,8}/packer_cache
-	rm -rf packer/centos{7,8}/images
-	rm -f packer/centos{7,8}/centos{7,8}.pkr.hcl
-	rm -f packer/centos{7,8}/http/ks.cfg
-	rm -f libvirt/vm/kube*.xml
+	rm -rf packer/ubuntu-26-04-lts/images/*
+	rm -rf packer/ubuntu-26-04-lts/output/*
+	rm -rf packer/ubuntu-26-04-lts/http/user-data
+	rm -rf packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl
 
 deps: requirements.txt ## Install dependencies
 	@pip install --quiet --requirement requirements.txt
@@ -56,48 +50,18 @@ upgrade: ## Install depedency upgrades
 	@touch requirements.in
 	@$(MAKE) deps
 
-#
-# VM Guest management
-#
+.PHONY: images
+images: packer/ubuntu-26-04-lts/images/ubuntu-26-04-lts.qcow2 ## Build machine image
 
-_vmcreate: _qemu ## Create virtual guests
-
-.PHONY: _centos7
-_centos7: packer/centos7/images/centos7.qcow2
-
-.PHONY: _centos8
-_centos8: packer/centos8/images/centos8.qcow2 ## Build Cenots8 Image
-
-.PHONY: _qemu
-_qemu: _centos8 libvirt/vm/kuberun.xml libvirt/vm/kubemaster.xml libvirt/vm/kubelb.xml
-	-virsh net-define libvirt/network/kubenet.xml
-	-for host in kuberun1 kuberun2 kuberun3 kuberun4; do \
-		virt-clone -n $${host} --original-xml libvirt/vm/kuberun.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
-	done
-	-for host in kubemaster1 kubemaster2 kubemaster3; do \
-		virt-clone -n $${host} --original-xml libvirt/vm/kubemaster.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
-	done
-	-for host in kubelb1 kubelb2; do \
-		virt-clone -n $${host} --original-xml libvirt/vm/kubelb.xml --file /var/lib/libvirt/images/$${host}.qcow2; \
-	done
-	-scripts/setstaticip.py kubemaster1 kubenet 192.168.115.11
-	-scripts/setstaticip.py kubemaster2 kubenet 192.168.115.12
-	-scripts/setstaticip.py kubemaster3 kubenet 192.168.115.13
-	-scripts/setstaticip.py kuberun1 kubenet 192.168.115.21
-	-scripts/setstaticip.py kuberun2 kubenet 192.168.115.22
-	-scripts/setstaticip.py kuberun3 kubenet 192.168.115.23
-	-scripts/setstaticip.py kuberun4 kubenet 192.168.115.24
-	-scripts/setstaticip.py kubelb1 kubenet 192.168.115.31
-	-scripts/setstaticip.py kubelb2 kubenet 192.168.115.32
-	-virsh -q net-start kubenet
-	$(MAKE) vmstart
+.PHONY: template
+template: packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl packer/ubuntu-26-04-lts/http/user-data ## Build packer templates
 
 vmremove: ## Remove virtual guests
 	-for host in kubemaster1 kubemaster2 kubemaster3 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
 		virsh -q destroy $${host}; \
 	done
 	-for host in kubemaster1 kubemaster2 kubemaster3 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
-		virsh -q undefine $${host} --storage /var/lib/libvirt/images/$${host}.qcow2; \
+		virsh -q undefine $${host} --storage ~/.local/share/kubelab/images/$${host}.qcow2; \
 	done
 	-virsh net-destroy kubenet
 	-virsh net-undefine kubenet
@@ -106,19 +70,10 @@ vmremove: ## Remove virtual guests
 	done
 
 vmstart: ## Start virtual guests
-	-virsh -q net-start kubenet
-	-for host in kuberun1 kuberun2 kuberun3 kuberun4 kubemaster1 kubemaster2 kubemaster3 kubelb1 kubelb2; do \
-		virsh -q start $${host}; \
-	done
+	scripts/libvirtsetup.py start --config libvirt/manifest/kubenet.yml --net-template libvirt/template/libvirtnetwork.xml.j2 --dom-template libvirt/template/libvirtdomain.xml.j2
 
 vmshutdown: ## Shutdown virtual guests
-	-virsh -q shutdown kuberun1
-	-virsh -q shutdown kuberun2
-	-virsh -q shutdown kuberun3
-	-virsh -q shutdown kuberun4
-	-virsh -q shutdown kubemaster1
-	-virsh -q shutdown kubelb1
-	-virsh -q shutdown kubelb2
+	scripts/libvirtsetup.py shutdown --config libvirt/manifest/kubenet.yml
 
 play: ## Run ansible playbook on virtual guests
 	-cd ansible; ansible-playbook -i inventory site.yml
@@ -135,54 +90,24 @@ tmp:
 
 tmp/.env: scripts/envs.py
 	@$(MAKE) tmp
-	@test -x scripts/envs.py || chmod +x scripts/envs.py
 	@scripts/envs.py $@
+
+packer/ubuntu-26-04-lts/http/user-data: packer/ubuntu-26-04-lts/http/user-data.envsubst tmp/.env
+	@set -a; source tmp/.env; set +a; envsubst < $< > $@
+
+packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl: packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl.envsubst tmp/.env
+	@set -a; source tmp/.env; set +a; envsubst < $< > $@
 
 requirements.txt: requirements.in
 	@pip show pip-tools 2>&1 > /dev/null || pip install pip-tools
 	pip-compile --output-file=$@ $<
-
-libvirt/vm/kuberun.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=4 vm_vcpu_count=8 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
-
-libvirt/vm/kubemaster.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
-
-libvirt/vm/kubelb.xml: libvirt/vm/template.j2.xml
-	vm_name=template vm_mem_size=2 vm_vcpu_count=4 vm_disk=packer/centos8/images/centos8.qcow2 j2 $< > $@
-
-packer/centos7/images/sha256sums.txt: $(wildcard packer/centos7/images/*.qcow2)
-	cd packer/centos7/images; sha256sum -b *.qcow2 > sha256sums.txt
-
-packer/centos7/images/centos7.qcow2: packer/centos7/centos7.pkr.hcl packer/centos7/http/ks.cfg
-	@mkdir -p packer/centos7/images
-	@-rmdir packer/centos7/output
-	cd packer/centos7; packer build -on-error=$(PACKERONERROR) centos7.pkr.hcl
-	mv packer/centos7/output/centos7 packer/centos7/images/centos7.qcow2
-	$(MAKE) packer/centos7/images/sha256sums.txt
-	@-rmdir packer/centos7/output
-
-packer/centos8/images/sha256sums.txt: $(wildcard packer/centos8/images/*.qcow2)
-	cd packer/centos8/images; sha256sum -b *.qcow2 > sha256sums.txt
-
-packer/centos8/images/centos8.qcow2: packer/centos8/centos8.pkr.hcl packer/centos8/http/ks.cfg
-	@mkdir -p packer/centos8/images
-	@-rmdir packer/centos8/output
-	cd packer/centos8; packer build -on-error=$(PACKERONERROR) centos8.pkr.hcl
-	mv packer/centos8/output/centos8 packer/centos8/images/centos8.qcow2
-	$(MAKE) packer/centos8/images/sha256sums.txt
 	@-rmdir packer/centos8/output
 
-%: %.j2
-	j2 $< > $@
+packer/ubuntu-26-04-lts/images/ubuntu-26-04-lts.qcow2: packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl packer/ubuntu-26-04-lts/http/user-data packer/ubuntu-26-04-lts/output/ubuntu26_04_lts
+	@mkdir -p packer/ubuntu-26-04-lts/images
+	cp packer/ubuntu-26-04-lts/output/ubuntu26_04_lts packer/ubuntu-26-04-lts/images/ubuntu-26-04-lts.qcow2
+	cd packer/ubuntu-26-04-lts/images; sha256sum -b ubuntu-26-04-lts.qcow2 > sha256sums.txt
 
-%: %.envsubst
-	envsubst < $< > $@
-
-#
-# make wrapper - Execute any target target prefixed with a underscore.
-# EG 'make vmcreate' will result in the execution of 'make _vmcreate' 
-#
-%:
-	@test -x scripts/dotenv.sh || chmod +x scripts/dotenv.sh
-	@egrep -q '^_$@:' Makefile && $(MAKE) tmp/.env && scripts/dotenv.sh $(MAKE) _$@
+packer/ubuntu-26-04-lts/output/ubuntu26_04_lts:
+	@-rmdir packer/ubuntu-26-04-lts/output
+	cd packer/ubuntu-26-04-lts; packer build ubuntu26-04-lts.pkr.hcl

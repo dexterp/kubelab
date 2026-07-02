@@ -2,3 +2,4 @@ ansible
 docopt
 j2cli
 python-dotenv
+python-dotenv[cli]

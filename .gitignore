@@ -1,13 +1,9 @@
-centos7.pkr.hcl
-centos8.pkr.hcl
+.vscode
 creds_sh
 images
 ks.cfg
-kube.pkr.hcl
-libvirt/vm/kubemaster.xml
-libvirt/vm/kuberun.xml
-libvirt/vm/kubectl.xml
 output
+packer/**/*.hcl
 packer_cache
 tmp
-.vscode
+user-data
