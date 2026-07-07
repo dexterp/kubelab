@@ -4,6 +4,7 @@ SHELL=/bin/bash
 
 # Python
 PYTHON ?= $(shell command -v python3 python|head -n1)
+CURUSER ?= $(shell id -un)
 
 #
 # Help Script
@@ -38,10 +39,6 @@ endif
 
 clean: ## Reset project to original state
 	rm -rf tmp
-	rm -rf packer/ubuntu-26-04-lts/images/*
-	rm -rf packer/ubuntu-26-04-lts/output/*
-	rm -rf packer/ubuntu-26-04-lts/http/user-data
-	rm -rf packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl
 
 deps: requirements.txt ## Install dependencies
 	@pip install --quiet --requirement requirements.txt
@@ -50,11 +47,9 @@ upgrade: ## Install depedency upgrades
 	@touch requirements.in
 	@$(MAKE) deps
 
-.PHONY: images
-images: packer/ubuntu-26-04-lts/images/ubuntu-26-04-lts.qcow2 ## Build machine image
-
-.PHONY: template
-template: packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl packer/ubuntu-26-04-lts/http/user-data ## Build packer templates
+permissions: ## Fix permissions on vmlinuz for non-root users
+	@sudo chmod +r /boot/vmlinuz-$(shell uname -r) 
+	@sudo setfacl -m u:$(CURUSER):r /boot/vmlinuz-$(shell uname -r)
 
 vmremove: ## Remove virtual guests
 	-for host in kubemaster1 kubemaster2 kubemaster3 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2; do \
@@ -65,11 +60,12 @@ vmremove: ## Remove virtual guests
 	done
 	-virsh net-destroy kubenet
 	-virsh net-undefine kubenet
-	-for host in kubemaster1 kubemaster2 kubemaster3 kuberun1 kuberun2 kuberun3 kuberun4 kubelb1 kubelb2 192.168.115.10 192.168.115.11 192.168.115.12 192.168.115.13 192.168.115.21 192.168.115.22 192.168.115.23 192.168.115.24 192.168.115.31 192.168.115.32; do \
+	-for host in kubemaster1.dev.site kubemaster2.dev.site kubemaster3.dev.site kuberun1.dev.site kuberun2.dev.site kuberun3.dev.site kuberun4.dev.site kubelb1.dev.site kubelb2.dev.site 192.168.115.10 192.168.115.11 192.168.115.12 192.168.115.13 192.168.115.21 192.168.115.22 192.168.115.23 192.168.115.24 192.168.115.31 192.168.1１5.32; do \
 	   ssh-keygen -q -R $$host; \
 	done
 
-vmstart: ## Start virtual guests
+vmstart: ## Start virtual guests. Create them if they do not exist.
+	@test -r /boot/vmlinuz-$(shell uname -r) || $(MAKE) permissions
 	scripts/libvirtsetup.py start --config libvirt/manifest/kubenet.yml --net-template libvirt/template/libvirtnetwork.xml.j2 --dom-template libvirt/template/libvirtdomain.xml.j2
 
 vmshutdown: ## Shutdown virtual guests
@@ -92,22 +88,7 @@ tmp/.env: scripts/envs.py
 	@$(MAKE) tmp
 	@scripts/envs.py $@
 
-packer/ubuntu-26-04-lts/http/user-data: packer/ubuntu-26-04-lts/http/user-data.envsubst tmp/.env
-	@set -a; source tmp/.env; set +a; envsubst < $< > $@
-
-packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl: packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl.envsubst tmp/.env
-	@set -a; source tmp/.env; set +a; envsubst < $< > $@
-
 requirements.txt: requirements.in
 	@pip show pip-tools 2>&1 > /dev/null || pip install pip-tools
 	pip-compile --output-file=$@ $<
 	@-rmdir packer/centos8/output
-
-packer/ubuntu-26-04-lts/images/ubuntu-26-04-lts.qcow2: packer/ubuntu-26-04-lts/ubuntu26-04-lts.pkr.hcl packer/ubuntu-26-04-lts/http/user-data packer/ubuntu-26-04-lts/output/ubuntu26_04_lts
-	@mkdir -p packer/ubuntu-26-04-lts/images
-	cp packer/ubuntu-26-04-lts/output/ubuntu26_04_lts packer/ubuntu-26-04-lts/images/ubuntu-26-04-lts.qcow2
-	cd packer/ubuntu-26-04-lts/images; sha256sum -b ubuntu-26-04-lts.qcow2 > sha256sums.txt
-
-packer/ubuntu-26-04-lts/output/ubuntu26_04_lts:
-	@-rmdir packer/ubuntu-26-04-lts/output
-	cd packer/ubuntu-26-04-lts; packer build ubuntu26-04-lts.pkr.hcl
