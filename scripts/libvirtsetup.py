@@ -4,11 +4,12 @@
 Libvirt configuration generator.
 
 Usage:
-  libvirt-setup.py net [-q] --config=<path> --net-template=<path> --output=<path>
-  libvirt-setup.py domain [-q] --config=<path> --dom-template=<path> --dir=<path>
-  libvirt-setup.py installdisk [-q] [--cache-dir=<path>] --config=<path>
-  libvirt-setup.py start [-q] --config=<path> --net-template=<path> --dom-template=<path>
-  libvirt-setup.py shutdown [-q] --config=<path>
+  libvirtsetup.py net [-q] --config=<path> --net-template=<path> --output=<path>
+  libvirtsetup.py domain [-q] --config=<path> --dom-template=<path> --dir=<path>
+  libvirtsetup.py installdisk [-q] [--cache-dir=<path>] --config=<path>
+  libvirtsetup.py start [-q] --config=<path> --net-template=<path> --dom-template=<path>
+  libvirtsetup.py shutdown [-q] --config=<path>
+  libvirtsetup.py remove [-q] --config=<path>
 
 Options:
   -h --help                 Show this screen.
@@ -421,42 +422,6 @@ def start(
                 print(f"Failed to start domain '{host['name']}'")
                 sys.exit(1)
  
-    # start domains
-    #with tempfile.TemporaryDirectory() as tmpdir:
-    #    generate_domains(
-    #        config_path=config_path,
-    #        template_path=dom_template_path,
-    #        output_dir=Path(tmpdir),
-    #    )
-
-    #    for host in config["hosts"]:
-    #        dom_xml = Path(f"{tmpdir}/{host['name']}.xml")
-
-    #        if not dom_xml.is_file():
-    #            print(f"Domain XML file does not exist: {dom_xml}")
-    #            continue
-    #        
-    #        # check if domain exists
-    #        if domain_exists(host["name"]):
-    #            print(f"Domain '{host['name']}' already exists")
-    #        else:
-    #            try:
-    #                run_command(["virsh", "define", dom_xml])
-    #            except subprocess.CalledProcessError:
-    #                print(f"Failed to define domain from {dom_xml}")
-    #                sys.exit(-1)
-    #        
-    #        # check if domain has started
-    #        if domain_started(host["name"]):
-    #            print(f"Domain '{host['name']}' already started")
-    #        else:
-    #            try:
-    #                run_command(["virsh", "start", host["name"]])
-    #                print(f"Domain '{host['name']}' started")
-    #            except subprocess.CalledProcessError:
-    #                print(f"Failed to start domain '{host['name']}'")
-    #                sys.exit(-1)
-
 def virt_install(
     config: dict,
 ):
@@ -528,6 +493,29 @@ def shutdown(config_path: Path):
         else:
             print("Domain " + host["name"] + " not running")
 
+#
+# Remove
+#
+def remove(config_path: Path):
+    config = load_yaml_config(config_path)
+    for host in config["hosts"]:
+        # remove domain if it exists
+        if domain_exists(host["name"]):
+            run_command(["virsh", "destroy", host["name"]])
+            run_command(["virsh", "undefine", host["name"], "--remove-all-storage"])
+            print("Domain " + host["name"] + " removed")
+        else:
+            print("Domain " + host["name"] + " does not exist")
+        
+        # remove ssh keys
+        fqdn = host["fqdn"]
+        run_command(["ssh-keygen", "-R", fqdn])
+    
+    # remove network
+    if network_exists(config["network"]["name"]):
+        run_command(["virsh", "net-destroy", config["network"]["name"]])
+        run_command(["virsh", "net-undefine", config["network"]["name"]])
+        print("Network " + config["network"]["name"] + " removed")
 
 #
 # Main
@@ -567,6 +555,10 @@ def main():
         )
     elif args["shutdown"]:
         shutdown(config_path=Path(args["--config"]))
+    elif args["remove"]:
+        confirm = input("Are you sure you want to remove all domains and network? (y/n): ")
+        if confirm.lower() == "y":
+            remove(config_path=Path(args["--config"]))
 
 def fail(msg):
     print(f"Error: {msg}", file=sys.stderr)

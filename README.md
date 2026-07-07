@@ -1,126 +1,149 @@
-# Kubernetes Qemu Installation
+# Kubernetes QEMU Installation
 
-Build a Kubernetes production environment on a single host using KVM 
+Build a small Kubernetes test environment on a single host using KVM/libvirt.
 
-_What will be built?_
-| Node        | Description            |
-|-------------|------------------------|
-| kubemaster1 | Kubernetes Master Node |
-| kuberun1    | Kubernetes runtime     |
-| kuberun2    | Kubernetes runtime     |
-| kuberun3    | Kubernetes runtime     |
-| kuberun4    | Kubernetes runtime     |
+What this repository builds
+
+| Node     | Description            |
+| -------- | ---------------------- |
+| control1 | Kubernetes Master Node |
+| control2 | Kubernetes Master Node |
+| control3 | Kubernetes Master Node |
+| worker1  | Kubernetes runtime     |
+| worker2  | Kubernetes runtime     |
+| worker3  | Kubernetes runtime     |
+| worker4  | Kubernetes runtime     |
+| kubelb1  | Load Balancer          |
+| kubelb2  | Load Balancer          |
 
 ## Installation
 
-_Requirements_
-* Linux host operating system. The instructions at the time of writing are for Ubuntu 20.04
-* Python 3. This lab will start 
-* RAM 32GiB 
-* Disk Space 512GB 
+Requirements
 
-_Download this repository_
+- Linux host with KVM support (instructions targeted at Ubuntu 24.04)
+- Python 3.8 or newer
+- RAM: 32 GiB
+- Disk space: 512 GB
+
+Clone the repository
+
 ```bash
-$ git clone git@github.com:dexterp/kubelab.git
-$ cd kubelab
+git clone git@github.com:dexterp/kubelab.git
+cd kubelab
 ```
 
-_Install Libvirt_
+Install libvirt and QEMU (Ubuntu example)
+
 ```bash
-$ sudo apt install libvirt-clients bridge-utils libvirt-daemon \
-                   libvirt-daemon-system qemu qemu-kvmt virt-manager
+sudo apt update
+sudo apt install -y libvirt-clients bridge-utils libvirt-daemon \
+    libvirt-daemon-system qemu qemu-kvm virt-manager
 ```
 
-_Start Libvrtd_
+Start libvirtd
+
 ```bash
-$ sudo systemctl start libvirtd
+sudo systemctl start libvirtd
 ```
 
-_Build and start VMs_
+Build and start the VMs
 
 ```bash
-$ make build
+make vmstart
 ```
 
-_Using virsh to list vms_
-
-Once build is complete you can manage the Virtual Machines using virsh.
+Using `virsh` to list VMs
 
 ```bash
-$ virsh list
+virsh list --all
+```
 
+Example running VMs
+
+```
  Id   Name          State
 -----------------------------
- 6    kuberun1      running
- 7    kuberun2      running
- 8    kuberun3      running
- 9    kuberun4      running
- 10   kubemaster1   running
+ 6    control1      running
+ 7    control2      running
+ 8    control3      running
+ 9    worker1       running
+ 10   worker2       running
+ 11   worker3       running
+ 12   worker4       running
+ 13   kubelb1       running
+ 14   kubelb2       running
 ```
 
-_Host resolution using NSS_
+Configure systemd-resolved to use libvirtd's DNS (optional)
 
-In order to resolve VM guest hostnames libvirt has a NSS module which will
-automatically detect and resolve hostnames using client resolver. More
-information about libvirt NSS can be found at <https://libvirt.org/nss.html>.
+Add or update `/etc/systemd/resolved.conf` with the following:
 
-To resolve hostnames, install libvirt NSS .
+```
+[Resolve]
+DNS=192.168.115.1
+Domains=~dev.site
+```
+
+Then restart the resolver:
+
 ```bash
-$ sudo apt install libnss-libvirt
-
-# Edit /etc/nsswitch.conf to relfect the following line
-$ cat /etc/nsswitch.conf
-hosts:       files libvirt_guest dns
-...
+sudo systemctl restart systemd-resolved
 ```
 
-_ssh to a VM guest_
+SSH to a VM guest
 
-The VMs need a minute or more after starting to allow NSS libvirtd time to pick up the nodes.
-Once they have appeared one can ssh directly to the host using ones username or the root account.
-The $USER(s) public key is added to both the root account and the $USER account on each VM guest.
+Allow a minute after VM startup for libvirtd's dnsmasq to populate DNS. The
+user's public key is installed in the user account on each guest so you can SSH
+using your local username which was created on the vm guests. The public key was
+added to the user account.
 
-SSH to the kubernetes master to test that connectivity is working
 ```bash
-$ ssh kubemaster1
-
-[root@kubemaster1 ~]# 
+ssh control1.dev.site
+# you should get a shell on the remote guest
 ```
 
-_Install Kubernetes Using Ansible_
+Install Kubernetes using Ansible
 
-The installation of Kubernetes is installed using an ansible playbook. The Ansible playbook is under the directory `ansible/`
+TODO: update Ansible for Ubuntu. Ansible is currently disabled until it is
+converted.
 
-* `ansible/site.yml` - Ansible site configuration
-* `ansible/ansible.cfg` - Ansible configuration file
-* `ansible/inventory` - Ansible inventory
-* `ansible/roles/**` - Ansible roles
+The Kubernetes installation is performed with an Ansible playbook under
+`ansible/`.
 
-Run the following command to install Kubernetes using the Ansible playbook...
+- `ansible/site.yml` — site playbook
+- `ansible/ansible.cfg` — Ansible config
+- `ansible/inventory` — inventory file
+- `ansible/roles/` — role implementations
+
+Note: The roles may require conversion or adjustments depending on target
+distribution.
+
+Run the playbook
+
 ```bash
-make runplaybook
+make play
 ```
 
-# Managing this lab 
+## Managing this lab
 
-This lab uses make, ansible, libvirt and other tools to manage the lifecycle
-of VMs in this lab. This section provides some help on these tools.
+This project uses `make`, Ansible and libvirt to manage the VM lifecycle.
 
-## Makefile targets
+Common `Makefile` targets
 
-* `make help`        - Print help information
-* `make build`       - Build packer container runtime images
-* `make vmcreate`    - Create VMs
-* `make vmstart`     - Start VMs
-* `make play`        - Run Ansible Playbook to configure kubernetes
-* `make vmremove`    - Remove VMs
-* `make getconf`     - Get Kubernetes ~/.kube/config file
+- `make help` — show help
+- `make clean` — reset project state
+- `make deps` — install host dependencies
+- `make upgrade` — upgrade dependencies
+- `make vmstart` — create and start VMs
+- `make vmshutdown` — shut down VMs
+- `make vmremove` — remove VM definitions
+- `make play` — run the Ansible playbook
+- `make permissions` — fix vmlinuz permissions for non-root users
+- `make autosync` — rsync files on change (requires `fswatch` and `rsync`)
 
-## Libvirtd commands
+Libvirt / `virsh` commands
 
-As the VMs are managed by Libvirtd the `virsh` cli can be used to manage the VMs directly.
-
-Some common commands.
-
-* `virsh list`           - List networks  
-* `virsh start <domain>` - Start a domain (VM)
+- `virsh list --all` — list domains
+- `virsh start <domain>` — start a domain
+- `virsh dumpxml <domain>` — show domain XML
+- `virsh net-dumpxml kubenet` — show network XML for `kubenet`

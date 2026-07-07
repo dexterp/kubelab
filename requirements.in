@@ -2,3 +2,4 @@ ansible
 docopt
 python-dotenv
 python-dotenv[cli]
+PyYAML

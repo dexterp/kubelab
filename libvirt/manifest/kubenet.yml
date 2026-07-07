@@ -16,8 +16,8 @@ network:
       start: 192.168.115.128
       end: 192.168.115.254
 hosts:
-  - name: kubemaster1
-    fqdn: kubemaster1.dev.site
+  - name: control1
+    fqdn: control1.dev.site
     ip: 192.168.115.11
     mac: 52:54:00:19:20:d1
     mem_size: 4096
@@ -25,11 +25,11 @@ hosts:
     vcpu_count: "2"
     os_id: ubuntu-lts-latest
     vol_pool: default
-    vol_name: kubemaster1.qcow2
+    vol_name: control1.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
-  - name: kubemaster2
-    fqdn: kubemaster2.dev.site
+  - name: control2
+    fqdn: control2.dev.site
     ip: 192.168.115.12
     mac: 52:54:00:43:b1:3b
     mem_size: 4096
@@ -37,11 +37,11 @@ hosts:
     vcpu_count: "2"
     os_id: ubuntu-lts-latest
     vol_pool: default
-    vol_name: kubemaster2.qcow2
+    vol_name: control2.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
-  - name: kubemaster3
-    fqdn: kubemaster3.dev.site
+  - name: control3
+    fqdn: control3.dev.site
     ip: 192.168.115.13
     mac: 52:54:00:f2:cc:58
     mem_size: 4096
@@ -49,11 +49,11 @@ hosts:
     vcpu_count: "2"
     os_id: ubuntu-lts-latest
     vol_pool: default
-    vol_name: kubemaster3.qcow2
+    vol_name: control3.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
-  - name: kuberun1
-    fqdn: kuberun1.dev.site
+  - name: worker1
+    fqdn: worker1.dev.site
     ip: 192.168.115.21
     mac: 52:54:00:3b:86:4d
     mem_size: 8192
@@ -61,11 +61,11 @@ hosts:
     vcpu_count: 4
     os_id: ubuntu-lts-latest
     vol_pool: default
-    vol_name: kuberun1.qcow2
+    vol_name: worker1.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
-  - name: kuberun2
-    fqdn: kuberun2.dev.site
+  - name: worker2
+    fqdn: worker2.dev.site
     ip: 192.168.115.22
     mac: 52:54:00:4c:05:e6
     mem_size: 8192
@@ -73,11 +73,11 @@ hosts:
     vcpu_count: 4
     os_id: ubuntu-lts-latest
     vol_pool: default
-    vol_name: kuberun2.qcow2
+    vol_name: worker2.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
-  - name: kuberun3
-    fqdn: kuberun3.dev.site
+  - name: worker3
+    fqdn: worker3.dev.site
     ip: 192.168.115.23
     mac: 52:54:00:11:55:0f
     mem_size: 8192
@@ -85,11 +85,11 @@ hosts:
     vcpu_count: 4
     os_id: ubuntu-lts-latest
     vol_pool: default
-    vol_name: kuberun3.qcow2
+    vol_name: worker3.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
-  - name: kuberun4
-    fqdn: kuberun4.dev.site
+  - name: worker4
+    fqdn: worker4.dev.site
     ip: 192.168.115.24
     mac: 52:54:00:ff:69:4d
     mem_size: 8192
@@ -97,7 +97,7 @@ hosts:
     vcpu_count: 4
     os_id: ubuntu-lts-latest
     vol_pool: default
-    vol_name: kuberun4.qcow2
+    vol_name: worker4.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
   - name: kubelb1
