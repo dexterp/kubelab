@@ -15,6 +15,18 @@ network:
     range:
       start: 192.168.115.128
       end: 192.168.115.254
+ansible:
+  # Inventory is from ansible/inventory
+  inventory:
+    all_vars:
+      ansible_ssh_user: root
+      touchD: /var/local/ansible/touch
+      filesD: /var/local/ansible/files
+    lb_vars:
+      keepalived_virtual_router_id: 1
+    gen_lb_vars:
+      - keepalived_auth_pass
+
 hosts:
   - name: control1
     fqdn: control1.dev.site
@@ -27,8 +39,11 @@ hosts:
     vol_pool: default
     vol_name: control1.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: control
 
   - name: control2
+    ansible_group: control
     fqdn: control2.dev.site
     ip: 192.168.115.12
     mac: 52:54:00:43:b1:3b
@@ -39,6 +54,8 @@ hosts:
     vol_pool: default
     vol_name: control2.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: control
 
   - name: control3
     fqdn: control3.dev.site
@@ -51,6 +68,8 @@ hosts:
     vol_pool: default
     vol_name: control3.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: control
 
   - name: worker1
     fqdn: worker1.dev.site
@@ -63,6 +82,8 @@ hosts:
     vol_pool: default
     vol_name: worker1.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: worker
 
   - name: worker2
     fqdn: worker2.dev.site
@@ -75,6 +96,8 @@ hosts:
     vol_pool: default
     vol_name: worker2.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: worker
 
   - name: worker3
     fqdn: worker3.dev.site
@@ -87,6 +110,8 @@ hosts:
     vol_pool: default
     vol_name: worker3.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: worker
 
   - name: worker4
     fqdn: worker4.dev.site
@@ -99,6 +124,8 @@ hosts:
     vol_pool: default
     vol_name: worker4.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: worker
 
   - name: kubelb1
     fqdn: kubelb1.dev.site
@@ -111,6 +138,11 @@ hosts:
     vol_pool: default
     vol_name: kubelb1.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: lb
+      vars:
+        keepalive_state: MASTER
+        keepalive_priority: 100
 
   - name: kubelb2
     fqdn: kubelb2.dev.site
@@ -123,3 +155,8 @@ hosts:
     vol_pool: default
     vol_name: kubelb2.qcow2
     src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    ansible:
+      group: lb
+      vars:
+        keepalive_state: BACKUP
+        keepalive_priority: 90

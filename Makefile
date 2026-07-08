@@ -1,7 +1,5 @@
 SHELL=/bin/bash
 
-.PHONY: _build _centos8 clean deps _vmcreate vmremove vmstart play
-
 # Python
 PYTHON ?= $(shell command -v python3 python|head -n1)
 CURUSER ?= $(shell id -un)
@@ -57,7 +55,7 @@ vmshutdown: ## Shutdown virtual guests
 vmremove: ## Remove virtual guests
 	-scripts/libvirtsetup.py remove --config libvirt/manifest/kubenet.yml
 
-play: ## Run ansible playbook on virtual guests
+play: ansible/inventory ## Run ansible playbook on virtual guests
 	@echo "Disabled for now since moving to Ubuntu."
 	@#-cd ansible; ansible-playbook -i inventory site.yml
 
@@ -81,3 +79,6 @@ tmp:
 requirements.txt: requirements.in
 	@pip show pip-tools 2>&1 > /dev/null || pip install pip-tools
 	pip-compile --output-file=$@ $<
+
+ansible/inventory: libvirt/manifest/kubenet.yml
+	scripts/ansiblesetup.py inventory --config libvirt/manifest/kubenet.yml $@

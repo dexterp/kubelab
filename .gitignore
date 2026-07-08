@@ -2,6 +2,7 @@
 .vscode
 creds_sh
 images
+inventory
 ks.cfg
 output
 packer/**/*.hcl
