@@ -1,10 +1,10 @@
 network:
-  name: kubenet
+  name: kubelab
   domain: dev.site
   forward:
     mode: nat
   bridge:
-    name: kubenet
+    name: kubelab
     stp: "on"
     delay: 0
   mac: "52:54:00:00:00:00"

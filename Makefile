@@ -47,13 +47,13 @@ upgrade: ## Install dependency upgrades
 
 vmstart: ## Start virtual guests. Create them if they do not exist.
 	@test -r /boot/vmlinuz-$(shell uname -r) || $(MAKE) permissions
-	scripts/libvirtsetup.py start --config libvirt/manifest/kubenet.yml --net-template libvirt/template/libvirtnetwork.xml.j2 --dom-template libvirt/template/libvirtdomain.xml.j2
+	scripts/libvirtsetup.py start --config kubelab.yml --net-template libvirt/template/libvirtnetwork.xml.j2 --dom-template libvirt/template/libvirtdomain.xml.j2
 
 vmshutdown: ## Shutdown virtual guests
-	scripts/libvirtsetup.py shutdown --config libvirt/manifest/kubenet.yml
+	scripts/libvirtsetup.py shutdown --config kubelab.yml
 
 vmremove: ## Remove virtual guests
-	-scripts/libvirtsetup.py remove --config libvirt/manifest/kubenet.yml
+	-scripts/libvirtsetup.py remove --config kubelab.yml
 
 play: ansible/inventory ## Run ansible playbook on virtual guests
 	@echo "Disabled for now since moving to Ubuntu."
@@ -80,5 +80,5 @@ requirements.txt: requirements.in
 	@pip show pip-tools 2>&1 > /dev/null || pip install pip-tools
 	pip-compile --output-file=$@ $<
 
-ansible/inventory: libvirt/manifest/kubenet.yml
-	scripts/ansiblesetup.py inventory --config libvirt/manifest/kubenet.yml $@
+ansible/inventory: kubelab.yml
+	scripts/ansiblesetup.py inventory --config kubelab.yml $@

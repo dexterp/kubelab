@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# The config file is libvirt/manifest/kubenet.yml
+# The config file is kubelab.yml
 
 """
 Ansible setup.
