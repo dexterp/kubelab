@@ -59,7 +59,7 @@ play: ansible/inventory ## Run ansible playbook on virtual guests
 	@echo "Disabled for now since moving to Ubuntu."
 	@#-cd ansible; ansible-playbook -i inventory site.yml
 
-permissions: ## Fix permissions on vmlinuz for non-root users
+permissions: # Fix permissions on vmlinuz for non-root users
 	@sudo chmod g+r /boot/vmlinuz-$(shell uname -r) 
 	@sudo setfacl -m u:$(CURUSER):r /boot/vmlinuz-$(shell uname -r)
 
