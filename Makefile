@@ -64,7 +64,7 @@ permissions: # Fix permissions on vmlinuz for non-root users
 	@sudo setfacl -m u:$(CURUSER):r /boot/vmlinuz-$(shell uname -r)
 
 autosync: ## Automatically rsync files to a remote host when they change. Requires fswatch and rsync.
-	@test -f rsyncdest.txt || read -p "Enter the destination path for rsync (e.g. user@host:/path/to/dir): " dest; echo $$dest > rsyncdest.txt
+	@test -f rsyncdest.txt || (read -p "Enter the destination path for rsync (e.g. user@host:/path/to/dir): " dest; echo $$dest > rsyncdest.txt)
 	@test -f rsyncdest.txt || (echo "rsyncdest.txt not found. Please create it with the destination path for rsync." && exit 1)	
 	rsync -avz --exclude-from=.rsyncignore . $$(cat rsyncdest.txt)
 	fswatch -o . | xargs -n1 -I{} rsync -avz --exclude-from=.rsyncignore . $$(cat rsyncdest.txt)
