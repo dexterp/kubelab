@@ -9,23 +9,28 @@
     path: /etc/kubernetes/admin.conf
   delegate_to: "{{ seedmaster }}"
 
-- name: Kubernetes - Join token
-  shell:
-    cmd: "kubeadm token create --print-join-command && touch /var/local/ansible/touch/kubeadm-joined-{{ inventory_hostname_short }}"
-    creates: "/var/local/ansible/touch/kubeadm-joined-{{ inventory_hostname_short }}"
-  register: kubeadmjoincmd
-  delegate_to: "{{ seedmaster }}"
+- name: Check if already joined
+  stat:
+    path: /var/local/ansible/touch/kubeadm-join
+  register: has_joined
 
-- set_fact:
-    kubeadmjoin: "{{ kubeadmjoincmd.stdout }} "
+- block:
+    - name: Wait - kubeadmin init seedmaster port
+      wait_for:
+        host: 127.0.0.1
+        port: 6443
+      delegate_to: "{{ seedmaster }}"
 
-- name: Wait - kubeadmin init seedmaster port
-  wait_for:
-    host: 0.0.0.0
-    port: 6443
-  delegate_to: "{{ seedmaster }}"
+    - name: Kubernetes - Join token
+      shell:
+        cmd: "kubeadm token create --print-join-command"
+      register: kubeadmjoincmd
+      delegate_to: "{{ seedmaster }}"
 
-- name: Kubernetes - Join Command
-  shell:
-    cmd: "{{ kubeadmjoin }} && touch /var/local/ansible/touch/kubeadm-join"
-    creates: /var/local/ansible/touch/kubeadm-join
+    - set_fact:
+        kubeadmjoin: "{{ kubeadmjoincmd.stdout }} "
+
+    - name: Kubernetes - Join Command
+      shell:
+        cmd: "{{ kubeadmjoin }} && touch /var/local/ansible/touch/kubeadm-join"
+  when: not has_joined.stat.exists

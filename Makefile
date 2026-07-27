@@ -49,6 +49,9 @@ vmstart: ## Start virtual guests. Create them if they do not exist.
 	@test -r /boot/vmlinuz-$(shell uname -r) || $(MAKE) permissions
 	scripts/libvirtsetup.py start --config kubelab.yml --net-template libvirt/template/libvirtnetwork.xml.j2 --dom-template libvirt/template/libvirtdomain.xml.j2
 
+vmstartpass: tmp/password ## Start vms with a root password for debugging
+	scripts/libvirtsetup.py start --config kubelab.yml --net-template libvirt/template/libvirtnetwork.xml.j2 --dom-template libvirt/template/libvirtdomain.xml.j2 --password tmp/password
+
 vmshutdown: ## Shutdown virtual guests
 	scripts/libvirtsetup.py shutdown --config kubelab.yml
 
@@ -56,8 +59,7 @@ vmremove: ## Remove virtual guests
 	-scripts/libvirtsetup.py remove --config kubelab.yml
 
 play: ansible/inventory ## Run ansible playbook on virtual guests
-	@echo "Disabled for now since moving to Ubuntu."
-	@#-cd ansible; ansible-playbook -i inventory site.yml
+	@cd ansible && ansible-playbook -i inventory site.yml
 
 permissions: # Fix permissions on vmlinuz for non-root users
 	@sudo chmod g+r /boot/vmlinuz-$(shell uname -r) 
@@ -75,6 +77,9 @@ autosync: ## Automatically rsync files to a remote host when they change. Requir
 #
 tmp:
 	@mkdir -p tmp
+
+tmp/password:
+	@read -rsp "Enter Password: " password && echo $$password > tmp/password
 
 requirements.txt: requirements.in
 	@pip show pip-tools 2>&1 > /dev/null || pip install pip-tools

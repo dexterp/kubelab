@@ -49,15 +49,18 @@ def generate_inventory(config: dict) -> str:
     for key, value in config.get("ansible", {}).get("inventory", {}).get("all_vars", {}).items():
         all_vars[key] = value
     
+    seed_master = first_host_in_group("control", config)
+    all_vars["seedmaster"] = seed_master
+    
     lb_vars = {}
     for key, value in config.get("ansible", {}).get("inventory", {}).get("lb_vars", {}).items():
         lb_vars[key] = value
     
     for gen_lb_vars in config.get("ansible", {}).get("inventory", {}).get("gen_lb_vars", []):
         if gen_lb_vars == "keepalived_auth_pass":
-            keepalive_password_file = Path("tmp/keepalived_auth_pass.txt")
-            keepalive_password = generate_keepalived_password(keepalive_password_file)
-            lb_vars["keepalived_auth_pass"] = f"'{keepalive_password}'"
+            keepalived_password_file = Path("tmp/keepalived_auth_pass.txt")
+            keepalived_password = generate_keepalived_password(keepalived_password_file)
+            lb_vars["keepalived_auth_pass"] = f"'{keepalived_password}'"
     
     inventory_lines.append(f"[all:vars]")
     for all_var_key, all_var_value in all_vars.items():
@@ -93,6 +96,14 @@ def generate_keepalived_password_file(password: str, file_path: Path) -> str:
 
 def generate_keepalived_password(file_path: Path) -> str:
         return generate_keepalived_password_file(generate_password(), file_path)
+
+def first_host_in_group(group: str, config: dict) -> str:
+    # Iterate through ini file at kubelab.yml randomly choose a control
+    hosts = []
+    for host in config.get("hosts", []):
+        ansible = host.get("ansible", {})
+        if ansible.get("group", "").startswith(group):
+            return host["fqdn"]
 
 #
 # Main

@@ -1,0 +1,1 @@
+KUBELET_EXTRA_ARGS="--config /var/lib/kubelet/config.yaml"

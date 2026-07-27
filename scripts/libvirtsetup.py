@@ -7,7 +7,7 @@ Usage:
   libvirtsetup.py net [-q] --config=<path> --net-template=<path> --output=<path>
   libvirtsetup.py domain [-q] --config=<path> --dom-template=<path> --dir=<path>
   libvirtsetup.py installdisk [-q] [--cache-dir=<path>] --config=<path>
-  libvirtsetup.py start [-q] --config=<path> --net-template=<path> --dom-template=<path>
+  libvirtsetup.py start [-q] --config=<path> --net-template=<path> --dom-template=<path> [--password=<password>]
   libvirtsetup.py shutdown [-q] --config=<path>
   libvirtsetup.py remove [-q] --config=<path>
 
@@ -22,6 +22,8 @@ Options:
 
   -o --output=<path>        Output path for generated network XML.
   -d --dir=<path>           Directory to write generated domain XML files.
+
+  -p --password=<password>  Set optional password when starting for the first time
 
      --cache-dir=<path>     Path to cache directory. [default: /var/cache/libvirt-gen-conf]
 """
@@ -371,6 +373,8 @@ def start(
     config_path: Path,
     dom_template_path: Path,
     net_template_path: Path,
+    install_vm: InstallVM,
+    password: any=None,
 ):
     config = load_yaml_config(config_path)
 
@@ -408,7 +412,7 @@ def start(
             print("Failed to start network")
             sys.exit(1)
 
-    virt_install(config)
+    virt_install(install_vm, config, password)
 
     for host in config["hosts"]:
         # check if domain has started
@@ -423,7 +427,9 @@ def start(
                 sys.exit(1)
  
 def virt_install(
+    install_vm: InstallVM,
     config: dict,
+    password: any=None,
 ):
     network = config["network"]["name"]
     for host in config["hosts"]:
@@ -434,9 +440,7 @@ def virt_install(
         os_id = host["os_id"]
         src_image = host["src_image"]
 
-        inject = Inject()
-        create_image = inject.InstallVM()
-        create_image.install(name, src_image, mac_address=mac_address, mem_size=mem_size, vcpu_count=vcpu_count, os_id=os_id, user=os.environ["USER"], home=f"/home/{os.environ['USER']}", network=network)
+        install_vm.install(name, src_image, mac_address=mac_address, mem_size=mem_size, vcpu_count=vcpu_count, os_id=os_id, user=os.environ["USER"], home=f"/home/{os.environ['USER']}", network=network, password=password)
 
 def domain_exists(name: str) -> bool:
     try:
@@ -527,6 +531,8 @@ def main():
     global quiet
     quiet = args["--quiet"]
 
+    inject = Inject()
+
     if args["net"]:
         generate_network(
             config_path=Path(args["--config"]),
@@ -552,6 +558,8 @@ def main():
             config_path=Path(args["--config"]),
             dom_template_path=Path(args["--dom-template"]),
             net_template_path=Path(args["--net-template"]),
+            install_vm=inject.InstallVM(),
+            password=args["--password"]
         )
     elif args["shutdown"]:
         shutdown(config_path=Path(args["--config"]))

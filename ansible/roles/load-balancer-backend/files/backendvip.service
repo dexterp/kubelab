@@ -1,0 +1,13 @@
+[Unit]
+Description=Enable and disable backend VIPs
+After=network.target
+Before=shutdown.target
+
+[Service]
+Type=simple
+RemainAfterExit=true
+ExecStart=/usr/local/sbin/backendvip.py enable --all-vips
+ExecStop=/usr/local/sbin/backendvip.py disable --all-vips
+
+[Install]
+WantedBy=multi-user.target

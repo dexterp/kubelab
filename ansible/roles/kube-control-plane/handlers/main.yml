@@ -1,2 +1,5 @@
 ---
 # handlers file for kube-control-plane
+- name: Enable backend vip
+  shell:
+    cmd: backendvip.py enable --all-vips

@@ -22,6 +22,11 @@ ansible:
       ansible_ssh_user: root
       touchD: /var/local/ansible/touch
       filesD: /var/local/ansible/files
+      pod_network_cidr: 10.244.0.0/16
+      kube_apiserver_port: 6443
+      kube_apiserver_vip_hostname: kubeapi.dev.site
+      kube_apiserver_vip: 192.168.115.10
+      kube_apiserver_vip_port: 6443
     lb_vars:
       keepalived_virtual_router_id: 1
     gen_lb_vars:
@@ -141,8 +146,8 @@ hosts:
     ansible:
       group: lb
       vars:
-        keepalive_state: MASTER
-        keepalive_priority: 100
+        keepalived_state: MASTER
+        keepalived_priority: 100
 
   - name: kubelb2
     fqdn: kubelb2.dev.site
@@ -158,5 +163,5 @@ hosts:
     ansible:
       group: lb
       vars:
-        keepalive_state: BACKUP
-        keepalive_priority: 90
+        keepalived_state: BACKUP
+        keepalived_priority: 90

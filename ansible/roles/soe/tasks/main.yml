@@ -1,20 +1,9 @@
 ---
 # tasks file for soe
-
-#
-# Repositories
-#
-- name: Repository - Kubernetes
-  copy:
-    src: "{{ role_path }}/files/etc/yum.repos.d/kubernetes.repo"
-    dest: /etc/yum.repos.d/kubernetes.repo
-
-- name: Docker CE
-  shell:
-    cmd: dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-    creates: /etc/yum.repos.d/docker-ce.repo
-  args:
-    warn: false
+- name: Wait for first-boot-script
+  wait_for:
+    path: /usr/local/sbin/first-boot-script.done
+    state: present
 
 #
 # All Users here
@@ -22,7 +11,7 @@
 - name: User - root (disable password)
   user:
     name: root
-    password: '*'
+    password: "*"
 
 - name: User - kubectl
   user:
@@ -31,42 +20,21 @@
     system: True
 
 #
-# RPM Installations
+# Deb Installations
 #
-- name: RPM Install - nscd python39 tc
-  dnf:
+- name: Apt Install - iproute2 python3-backoff python3-docopt
+  apt:
     name:
-      - nscd
-      - python39
-      - tc
+      - at
+      - iproute2
+      - python3-backoff
+      - python3-docopt
     state: latest
 
-#
-# Pip3
-#
-- name: Pip3 Install - backoff docopts
-  pip:
-    name:
-      - backoff
-      - docopts
-    executable: pip3
-    state: latest
-
-#
-# Security
-#
-
-- name: Config - SELinux permissive
-  ansible.posix.selinux:
-    configfile: /etc/selinux/config
-    policy: targeted
-    state: permissive
-
-- name: Service - firewalld (disabled)
+- name: Atd daemon
   service:
-    name: firewalld
-    enabled: no
-    state: stopped
+    name: atd
+    state: started
 
 #
 # System configuration
@@ -74,25 +42,14 @@
 - name: Sysctl - vm.swappiness
   ansible.posix.sysctl:
     name: vm.swappiness
-    value: '1'
+    value: "1"
 
 - name: Hostname - system hostname
   hostname:
     name: "{{ inventory_hostname }}"
 
-- name: Config - /etc/nscd.conf
-  copy:
-    src: "{{role_path}}/files/etc/nscd.conf"
-    dest: /etc/nscd.conf
-  notify: Restart - nscd
-
-- name: Config - /etc/nsswitch.conf
-  copy:
-    src: "{{role_path}}/files/etc/nscd.conf"
-    dest: /etc/nsswitch.conf
-  
   # Ansible generated files. Doesn't really belong here but SOE should be everywhere
-- name: Ansible generated - Location for Ansible generated files 
+- name: Ansible generated - Location for Ansible generated files
   file:
     path: "{{ item }}"
     state: directory

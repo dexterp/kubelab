@@ -13,7 +13,6 @@ class InstallVM(object):
         self._cache = cache
         self._image_dir = image_dir
 
-
     def run(self, cmd):
         subprocess.run(cmd, check=True)
 
@@ -49,6 +48,7 @@ class InstallVM(object):
         user: str="ubuntu",
         home: str="/home/ubuntu",
         network: str="default",
+        password: any=None,
         ):
 
         self.check_kernel_permissions()
@@ -70,6 +70,12 @@ class InstallVM(object):
             "-a", vm_image_tmp,
             "--hostname", vm_name,
             "--network",
+        ]
+
+        if password is not None:
+            virt_customize_cmd.extend(["--root-password", f"file:{password}"])
+
+        virt_customize_cmd.extend([
             "--run-command", f"useradd -m {user} -s /bin/bash",
             "--run-command", f"usermod -aG sudo {user}",
             "--run-command", f"touch {home}/.zshrc",
@@ -103,7 +109,7 @@ class InstallVM(object):
             "--run-command", "systemctl daemon-reload",
             "--run-command", "systemctl enable first-boot-script.service",
             "--run-command", "rm /etc/ssh/sshd_config.d/60-cloudimg-settings.conf",
-        ]
+        ])
 
         self.run(virt_customize_cmd)
 

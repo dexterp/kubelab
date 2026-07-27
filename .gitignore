@@ -2,7 +2,7 @@
 .vscode
 creds_sh
 images
-inventory
+ansible/inventory
 ks.cfg
 output
 packer/**/*.hcl

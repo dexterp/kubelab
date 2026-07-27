@@ -1,27 +1,31 @@
 global_defs {
     script_user root
+    router_id LVS_KUBE_APISERVER 
 }
-
-vrrp_script check_apiserver {
-  script "listener_check.py {{ kube_apiserver_vip }} {{ kube_apiserver_vip_port }}"
-  interval 5
-  weight 20
-}
-
 
 vrrp_instance apiserver-vip {
     state {{ keepalived_state }}
     interface {{ ansible_default_ipv4.interface }}
     virtual_router_id {{ keepalived_virtual_router_id }}
     priority {{ keepalived_priority }}
-    authentication {
-        auth_type PASS
-        auth_pass {{ keepalived_auth_pass }}
-    }
     virtual_ipaddress {
         {{ kube_apiserver_vip }}
     }
-    track_script {
-        check_apiserver weight 20
+}
+
+virtual_server {{ kube_apiserver_vip }} 6443 {
+    lvs_sched mh
+    lvs_method DR
+    protocol TCP
+{% for host in groups['control'] %}
+
+    real_server {{ hostvars[host]['ansible_default_ipv4']['address'] }} 6443 {
+        TCP_CHECK {
+            connect_timeout 3
+            delay_before_retry 3
+            delay_loop 30
+            retry 3
+        }
     }
+{% endfor %}
 }

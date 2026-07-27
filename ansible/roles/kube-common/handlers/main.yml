@@ -1,12 +1,11 @@
 ---
 # handlers file for kube-common
-- name: Restart - kubelet
-  service:
-    name: kubelet
-    state: restarted
-    daemon_reload: yes
-
 - name: Restart - containerd
   service:
     name: containerd
+    state: restarted
+
+- name: Restart - systemd-sysctl
+  service:
+    name: systemd-sysctl
     state: restarted

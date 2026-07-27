@@ -7,13 +7,21 @@
 - name: Wait For - kubeadm install
   wait_for:
     path: /usr/bin/kubeadm
+    state: started
+    timeout: 300
+
+- name: Wait For - containerd start
+  wait_for:
+    path: /run/containerd/containerd.sock
+    state: present
+    timeout: 300
 
 # tasks file for kube-control-plane
 - name: Initialization - kubeaadm init seedmaster
   shell:
     cmd: kubeadm init --apiserver-bind-port {{ kube_apiserver_port }} --control-plane-endpoint "{{ kube_apiserver_vip_hostname }}:{{ kube_apiserver_vip_port }}" --upload-certs --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log
     creates: "/etc/kubernetes/admin.conf"
-  when: inventory_hostname == seedmaster 
+  when: inventory_hostname == seedmaster
 
 - name: Wait - kubeadmin init seedmaster
   wait_for:
@@ -24,19 +32,20 @@
   copy:
     src: "{{role_path}}/files/usr/local/sbin/kube-gen-add-control.sh"
     dest: "/usr/local/sbin/kube-gen-add-control.sh"
-    mode: '700'
-  when: inventory_hostname == seedmaster 
+    mode: "700"
+  when: inventory_hostname == seedmaster
 
 - name: Generate - kube-add-control.sh
   shell:
     cmd: bash -c "umask 077; bash /usr/local/sbin/kube-gen-add-control.sh /var/local/ansible/files/kube-add-control.sh"
     creates: "/var/local/ansible/files/kube-add-control.sh"
-  when: inventory_hostname == seedmaster 
+  when: inventory_hostname == seedmaster
 
-- name: Wait - kube-add-contro.sh
+- name: Wait - kube-add-control.sh
   wait_for:
     path: /var/local/ansible/files/kube-add-control.sh
   delegate_to: "{{ seedmaster }}"
+  when: inventory_hostname != seedmaster
 
 - name: Fetch - kube-add-control.sh
   fetch:
@@ -44,13 +53,14 @@
     dest: /tmp/
     flat: true
   delegate_to: "{{ seedmaster }}"
+  when: inventory_hostname != seedmaster
 
 - name: Copy - kube-add-control.sh
   copy:
     src: /tmp/kube-add-control.sh
     dest: /usr/local/sbin/kube-add-control.sh
-    mode: '700'
-  when: inventory_hostname != seedmaster 
+    mode: "700"
+  when: inventory_hostname != seedmaster
 
 - name: Wait - kubeadmin init seedmaster port
   wait_for:
@@ -58,21 +68,42 @@
     port: 6443
     timeout: 1800
   delegate_to: "{{ seedmaster }}"
+  when: inventory_hostname != seedmaster
 
-- name: Initialization - kubeadm init
+- name: Wait for kube-net
+  wait_for:
+    path: "{{ touchD }}/install_calico"
+  delegate_to: "{{ seedmaster }}"
+  when: inventory_hostname != seedmaster
+
+- name: Check if kubernetes has been initialized
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: kube_config_file
+
+- name: Disable backend vip temporarily
+  shell:
+    cmd: backendvip.py disable --all-vips
+  when:
+    - not kube_config_file.stat.exists
+    - inventory_hostname != seedmaster
+
+- name: Kubernetes add control
   shell:
     cmd: /usr/local/sbin/kube-add-control.sh
     creates: /etc/kubernetes/admin.conf
+  when: inventory_hostname != seedmaster
+  notify: Enable backend vip
 
 - name: Config - kubectl (1/2)
   file:
     path: /root/.kube
     state: directory
-    mode: '750'
+    mode: "750"
 
 - name: Config - kubectl (2/2)
   copy:
     src: /etc/kubernetes/admin.conf
     dest: /root/.kube/config
-    mode: '600'
+    mode: "600"
     remote_src: yes

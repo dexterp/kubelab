@@ -1,0 +1,4 @@
+real_ip: {{ ansible_default_ipv4.address }}
+dev: lo
+vips:
+    - {{ kube_apiserver_vip }}

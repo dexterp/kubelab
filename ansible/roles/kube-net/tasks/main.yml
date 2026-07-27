@@ -1,6 +1,38 @@
 ---
 # tasks file for kube-net
-- name: Install Weave
-  shell: 
-    cmd: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" && touch "{{ touchD }}/install_weave"
-    creates: "{{ touchD }}/install_weave"
+
+- name: Wait for Kubernetes
+  wait_for:
+    host: 127.0.0.1
+    port: 6443
+  when: inventory_hostname == seedmaster
+
+- name: Copy - Calico files
+  copy:
+    src: "{{role_path}}/files/calico/v3.32.1/"
+    dest: "{{filesD}}/v3.32.1"
+  when: inventory_hostname == seedmaster
+
+- name: Template - Calico Custom Resources
+  template:
+    src: "{{role_path}}/files/calico/v3.32.1/custom-resources-bpf.yaml.j2"
+    dest: "{{filesD}}/v3.32.1/custom-resources-bpf.yaml"
+  when: inventory_hostname == seedmaster
+
+- name: Shell - Calico CRD
+  shell:
+    cmd: "kubectl create -f {{filesD}}/v3.32.1/v1_crd_projectcalico_org.yaml && touch {{touchD}}/install_calico_crd"
+    creates: "{{ touchD }}/install_calico_crd"
+  when: inventory_hostname == seedmaster
+
+- name: Shell - Calico Tigera Operator
+  shell:
+    cmd: "kubectl create -f {{filesD}}/v3.32.1/tigera-operator.yaml && touch {{touchD}}/install_calico_tigera_operator"
+    creates: "{{ touchD }}/install_calico_tigera_operator"
+  when: inventory_hostname == seedmaster
+
+- name: Shell - Calico Custom Resources
+  shell:
+    cmd: "kubectl create -f {{filesD}}/v3.32.1/custom-resources-bpf.yaml && touch {{ touchD }}/install_calico"
+    creates: "{{ touchD }}/install_calico"
+  when: inventory_hostname == seedmaster

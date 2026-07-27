@@ -6,7 +6,6 @@ ConditionFileIsExecutable=/usr/local/sbin/first-boot-script
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/first-boot-script
-ExecStartPost=mv /usr/local/sbin/first-boot-script /usr/local/sbin/first-boot-script.done
 
 [Install]
 Alias=first-boot-script.service

@@ -2,26 +2,26 @@
   roles:
     - soe
 
-    - role: kube-common
-      when: "'kubecluster' in group_names"
-
-    - role: kube-control-plane
-      when: "'kubemaster' in group_names"
-
-    - role: kube-container-runtime
-      when: "'kuberun' in group_names"
-
-    - role: kube-net
-      when: "'kubemaster' in group_names"
-
-    - role: kube-mgmt
-      when: "'kubemaster' in group_names"
-    
-    - role: openelb
-      when: "'kubemaster' in group_names"
-    
-    - role: kube-dashboard
-      when: "'kubemaster' in group_names"
+    - role: load-balancer-backend
+      when: "'control' in group_names"
 
     - role: load-balancer
-      when: "'kubelb' in group_names"
+      when: "'lb' in group_names"
+
+    - role: kube-common
+      when: "'control' in group_names"
+
+    - role: kube-common
+      when: "'worker' in group_names"
+
+    - role: kube-control-plane
+      when: "'control' in group_names"
+
+    - role: kube-net
+      when: "'control' in group_names"
+
+    - role: kube-mgmt
+      when: "'control' in group_names"
+
+    - role: kube-container-runtime
+      when: "'worker' in group_names"

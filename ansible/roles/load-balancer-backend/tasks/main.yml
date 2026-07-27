@@ -1,0 +1,44 @@
+---
+- name: Configure ARP sysctl settings
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+  loop:
+    - { name: "net.ipv4.conf.all.arp_ignore", value: "1" }
+    - { name: "net.ipv4.conf.all.arp_announce", value: "2" }
+    - { name: "net.ipv4.conf.default.arp_ignore", value: "1" }
+    - { name: "net.ipv4.conf.default.arp_announce", value: "2" }
+
+- name: Create Backendvip directory
+  file:
+    path: /etc/backendvip
+    state: directory
+    mode: '0755'
+
+- name: Install backendvip.yaml
+  template:
+    src: "{{role_path}}/templates/backendvip.yaml.j2"
+    dest: "/etc/backendvip/backendvip.yaml"
+
+- name: Install backendvip script
+  copy:
+    src: "{{ role_path }}/files/backendvip.py"
+    dest: /usr/local/sbin/backendvip.py
+    mode: "0755"
+
+- name: Install backendvip systemd unit
+  copy:
+    src: "{{ role_path }}/files/backendvip.service"
+    dest: /etc/systemd/system/backendvip.service
+    mode: "0644"
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true
+
+- name: Enable and start backendvip service
+  systemd:
+    name: backendvip
+    enabled: true
+    state: started
