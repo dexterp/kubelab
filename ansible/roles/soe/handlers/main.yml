@@ -1,7 +1,2 @@
 ---
 # handlers file for soe
-
-- name: Restart - nscd
-  service:
-    name: nscd
-    state: restarted

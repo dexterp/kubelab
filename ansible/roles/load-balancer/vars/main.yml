@@ -1,3 +1,0 @@
----
-# vars file for kube-lb
-kube_apiservers: "{{ groups['control'] }}"
