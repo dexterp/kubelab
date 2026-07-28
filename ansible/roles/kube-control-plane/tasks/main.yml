@@ -107,3 +107,30 @@
     dest: /root/.kube/config
     mode: "600"
     remote_src: yes
+
+# Match the version of etcd using
+# kubectl get pods -n kube-system -l component=etcd -o jsonpath='{.items[*].spec.containers[*].image}'
+
+- name: Download etcdctl etcdutl
+  get_url:
+    url: https://storage.googleapis.com/etcd/v3.6.8/etcd-v3.6.8-linux-amd64.tar.gz
+    dest: "{{filesD}}/etcd-v3.6.8-linux-amd64.tar.gz"
+
+- name: Extract etcdctl etcdutl
+  unarchive:
+    src: "{{filesD}}/etcd-v3.6.8-linux-amd64.tar.gz"
+    dest: "{{filesD}}/"
+    creates: "{{filesD}}/etcd-v3.6.8-linux-amd64/etcdctl"
+    remote_src: yes
+
+- name: Install etcdctl etcdutl
+  copy:
+    src: "{{filesD}}/etcd-v3.6.8-linux-amd64/{{item}}"
+    dest: "/usr/local/sbin/{{item}}"
+    owner: "root"
+    group: "root"
+    mode: "0750"
+    remote_src: yes
+  loop:
+    - etcdctl
+    - etcdutl
