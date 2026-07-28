@@ -86,6 +86,11 @@
       - "kubelet"
       - "cri-tools"
 
+- name: Install /etc/crictl.yaml
+  copy:
+    src: "{{role_path}}/files/crictl.yaml"
+    dest: "/etc/crictl.yaml"
+
 - name: Service - containerd
   service:
     name: containerd
