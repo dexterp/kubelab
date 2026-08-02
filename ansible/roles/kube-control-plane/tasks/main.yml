@@ -134,3 +134,18 @@
   loop:
     - etcdctl
     - etcdutl
+
+- name: Install etcdbackup
+  copy:
+    src: "{{role_path}}/files/usr/local/sbin/etcdbackup.py"
+    dest: "/usr/local/sbin/etcdbackup"
+    owner: "root"
+    group: "root"
+    mode: "0750"
+
+- name: Cron etcdbackup
+  cron:
+    name: etcdbackup
+    minute: "0"
+    hour: "0"
+    job: /usr/local/sbin/etcdbackup backup
