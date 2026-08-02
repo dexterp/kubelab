@@ -1,0 +1,25 @@
+- name: Wait for DNS resolution
+  command: "getent hosts {{ hostvars[item].ansible_host | default(item) }}"
+  register: dns_result
+  until: dns_result.rc == 0
+  retries: "{{ wait_timeout // wait_delay }}"
+  delay: "{{ wait_delay }}"
+  changed_when: false
+  loop: "{{ groups['all'] }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Wait for SSH
+  wait_for:
+    host: "{{ hostvars[item].ansible_host | default(item) }}"
+    port: 22
+    timeout: "{{ wait_timeout }}"
+    connect_timeout: 5
+    sleep: "{{ wait_delay }}"
+    state: started
+  loop: "{{ groups['all'] }}"
+  loop_control:
+    label: "{{ item }}"
+
+- debug:
+    msg: "All hosts are available."
