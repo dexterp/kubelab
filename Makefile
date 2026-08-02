@@ -58,7 +58,7 @@ vmshutdown: ## Shutdown virtual guests
 vmremove: ## Remove virtual guests
 	-scripts/libvirtsetup.py remove --config kubelab.yml
 
-play: ansible/inventory ## Run ansible playbook on virtual guests
+play: ansible/inventory vmstart ## Run ansible playbook on virtual guests
 	@cd ansible && ansible-playbook -i inventory site.yml
 
 permissions: # Fix permissions on vmlinuz for non-root users
