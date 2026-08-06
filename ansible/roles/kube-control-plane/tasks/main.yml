@@ -124,7 +124,6 @@
 - name: Sign pending CSRs
   shell:
     cmd: "kubectl get csr | grep Pending | grep kubernetes.io | awk '{print $1}' | xargs -I {} kubectl certificate approve {}"
-  notify: Restart kubelet
   when: csrs_pending.stdout != ""
 
 # Match the version of etcd using

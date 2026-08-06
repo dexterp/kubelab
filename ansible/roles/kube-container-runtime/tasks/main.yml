@@ -44,9 +44,4 @@
         cmd: "kubectl get csr | grep Pending | grep kubernetes.io | awk '{print $1}' | xargs -I {} kubectl certificate approve {}"
       delegate_to: "{{ seedmaster }}"
 
-    - name: Restart - kubelet
-      service:
-        name: kubelet
-        state: restarted
-
   when: not has_joined.stat.exists
