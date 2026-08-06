@@ -3,3 +3,8 @@
 - name: Enable backend vip
   shell:
     cmd: backendvip.py enable --all-vips
+
+- name: Restart kubelet
+  systemd:
+    name: kubelet
+    state: restarted

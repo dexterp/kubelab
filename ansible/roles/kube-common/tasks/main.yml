@@ -91,6 +91,13 @@
     src: "{{role_path}}/files/crictl.yaml"
     dest: "/etc/crictl.yaml"
 
+- name: Install kubeadm-init-patches
+  copy:
+    src: "{{role_path}}/files/kubeadm-init-patches/"
+    dest: "{{filesD}}/kubeadm-init-patches"
+    owner: "root"
+    mode: "0600"
+
 - name: Service - containerd
   service:
     name: containerd

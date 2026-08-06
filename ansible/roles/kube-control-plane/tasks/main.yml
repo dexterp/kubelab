@@ -17,9 +17,9 @@
     timeout: 300
 
 # tasks file for kube-control-plane
-- name: Initialization - kubeaadm init seedmaster
+- name: Initialization - kubeadm init seedmaster
   shell:
-    cmd: kubeadm init --apiserver-bind-port {{ kube_apiserver_port }} --control-plane-endpoint "{{ kube_apiserver_vip_hostname }}:{{ kube_apiserver_vip_port }}" --upload-certs --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log
+    cmd: kubeadm init --patches {{filesD}}/kubeadm-init-patches --apiserver-bind-port {{ kube_apiserver_port }} --control-plane-endpoint "{{ kube_apiserver_vip_hostname }}:{{ kube_apiserver_vip_port }}" --upload-certs --pod-network-cidr={{ pod_network_cidr }} > /root/kubeadmin_init.log
     creates: "/etc/kubernetes/admin.conf"
   when: inventory_hostname == seedmaster
 
@@ -108,6 +108,25 @@
     mode: "600"
     remote_src: yes
 
+- name: Wait for kubernetes join to complete
+  shell:
+    cmd: "kubectl wait --for=condition=Ready node/{{inventory_hostname}} --timeout=300s"
+  delegate_to: "{{ seedmaster }}"
+  when: inventory_hostname != seedmaster
+
+- name: Check if csrs are pending
+  shell:
+    cmd: "kubectl get csr | grep Pending | grep kubernetes.io"
+  register: csrs_pending
+  changed_when: false
+  failed_when: false
+
+- name: Sign pending CSRs
+  shell:
+    cmd: "kubectl get csr | grep Pending | grep kubernetes.io | awk '{print $1}' | xargs -I {} kubectl certificate approve {}"
+  notify: Restart kubelet
+  when: csrs_pending.stdout != ""
+
 # Match the version of etcd using
 # kubectl get pods -n kube-system -l component=etcd -o jsonpath='{.items[*].spec.containers[*].image}'
 
@@ -149,3 +168,62 @@
     minute: "0"
     hour: "0"
     job: /usr/local/sbin/etcdbackup backup
+
+- name: Create metrics-server directory
+  file:
+    path: "{{filesD}}/{{item}}"
+    state: directory
+  loop:
+    - "metrics-server"
+    - "metrics-server/v0.9.0"
+
+- name: Install metrics-server files
+  copy:
+    src: "{{role_path}}/files/metrics-server/{{item}}"
+    dest: "{{filesD}}/metrics-server/{{item}}"
+  loop:
+    - v0.9.0/components.yaml
+    - v0.9.0/components-custom.yaml
+    - metrics-server-csr.conf
+
+- name: Check age of /etc/kubernetes/admin.conf
+  stat:
+    path: "/etc/kubernetes/admin.conf"
+  register: stat_kube_config_file
+
+- name: Check age of metrics-server tls key
+  stat:
+    path: "{{filesD}}/metrics-server/tls.crt"
+  register: stat_metrics_server_tls_crt
+
+- block:
+    - name: Create metrics-server key
+      shell:
+        cmd: "umask 0077 && openssl genrsa -out {{filesD}}/metrics-server/tls.key 2048"
+
+    - name: Create metrics-server csr
+      shell:
+        cmd: "umask 0077 && openssl req -new -key {{filesD}}/metrics-server/tls.key -out {{filesD}}/metrics-server/tls.csr -config {{filesD}}/metrics-server/metrics-server-csr.conf"
+
+    - name: Sign metrics-server crt
+      shell:
+        cmd: "umask 0077 && openssl x509 -req -in {{filesD}}/metrics-server/tls.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out {{filesD}}/metrics-server/tls.crt -days 365 -extensions v3_ext -extfile {{filesD}}/metrics-server/metrics-server-csr.conf"
+
+    - name: Add metrics-server secret to kubernetes
+      shell:
+        cmd: "kubectl create secret tls metrics-server-tls -n kube-system --cert={{filesD}}/metrics-server/tls.crt --key={{filesD}}/metrics-server/tls.key -n kube-system"
+
+    - name: Remove tls key, csr
+      file:
+        path: "{{filesD}}/metrics-server/{{item}}"
+        state: absent
+      loop:
+        - tls.key
+        - tls.csr
+  when: inventory_hostname == seedmaster and (not stat_metrics_server_tls_crt.stat.exists or stat_metrics_server_tls_crt.stat.mtime < stat_kube_config_file.stat.mtime)
+
+- name: Install metric-servers server
+  shell:
+    cmd: "kubectl apply -f {{filesD}}/metrics-server/v0.9.0/components.yaml && touch {{touchD}}/install_metrics_server"
+    creates: "{{ touchD }}/install_metrics_server"
+  when: inventory_hostname == seedmaster

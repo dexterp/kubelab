@@ -1,0 +1,5 @@
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+# Certificate settings
+rotateCertificates: true # Automatically rotates kubelet client certificates
+serverTLSBootstrap: true # Automatically bootstraps kubelet serving certificates

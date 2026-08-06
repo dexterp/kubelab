@@ -28,9 +28,25 @@
       delegate_to: "{{ seedmaster }}"
 
     - set_fact:
-        kubeadmjoin: "{{ kubeadmjoincmd.stdout }} "
+        kubeadmjoin: "{{ kubeadmjoincmd.stdout }} --patches {{filesD}}/kubeadm-init-patches"
 
     - name: Kubernetes - Join Command
       shell:
         cmd: "{{ kubeadmjoin }} && touch /var/local/ansible/touch/kubeadm-join"
+
+    - name: Wait for kubernetes join to complete
+      shell:
+        cmd: "kubectl wait --for=condition=Ready node/{{inventory_hostname}} --timeout=300s"
+      delegate_to: "{{ seedmaster }}"
+
+    - name: Sign csrs
+      shell:
+        cmd: "kubectl get csr | grep Pending | grep kubernetes.io | awk '{print $1}' | xargs -I {} kubectl certificate approve {}"
+      delegate_to: "{{ seedmaster }}"
+
+    - name: Restart - kubelet
+      service:
+        name: kubelet
+        state: restarted
+
   when: not has_joined.stat.exists
