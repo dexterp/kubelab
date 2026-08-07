@@ -432,7 +432,9 @@ def virt_install(
     password: any=None,
 ):
     network = config["network"]["name"]
+    netip = config["network"]["ip"]["address"]
     for host in config["hosts"]:
+        ip = host["ip"]
         name = host["name"]
         mac_address = host["mac"]
         mem_size = host["mem_size"]
@@ -440,7 +442,7 @@ def virt_install(
         os_id = host["os_id"]
         src_image = host["src_image"]
 
-        install_vm.install(name, src_image, mac_address=mac_address, mem_size=mem_size, vcpu_count=vcpu_count, os_id=os_id, user=os.environ["USER"], home=f"/home/{os.environ['USER']}", network=network, password=password)
+        install_vm.install(name, src_image, ip, netip, netip, mac_address=mac_address, mem_size=mem_size, vcpu_count=vcpu_count, os_id=os_id, user=os.environ["USER"], home=f"/home/{os.environ['USER']}", network=network, password=password)
 
 def domain_exists(name: str) -> bool:
     try:

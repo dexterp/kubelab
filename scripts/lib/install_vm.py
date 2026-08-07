@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 
+from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -41,6 +42,9 @@ class InstallVM(object):
         self,
         vm_name,
         image_url,
+        ip: str,
+        dnsserver: str,
+        gateway: str,
         mac_address: str = None,
         mem_size: str = "2GiB",
         vcpu_count: str = "2",
@@ -64,6 +68,13 @@ class InstallVM(object):
         self.run([ "qemu-img", "resize", "-f", "qcow2", vm_image_tmp, "20G" ])
 
         auth_keys_file = self.gen_authorized_keys()
+
+        netplan_config = self.gen_netplan_config(ip=ip, dnsserver=dnsserver, gateway=gateway)
+        tempdir = os.path.join("tmp", vm_name)
+        os.makedirs(tempdir, exist_ok=True)
+        netplan_config_file = os.path.join(tempdir, "01-netcfg.yaml")
+        with open(netplan_config_file, "w") as f:
+            f.write(netplan_config)
 
         virt_customize_cmd = [
             "virt-customize",
@@ -91,7 +102,7 @@ class InstallVM(object):
             "--copy-in", "guestfiles/first-boot-script.service:/etc/systemd/system/",
             "--copy-in", "guestfiles/first-boot-script:/usr/local/sbin/",
             "--copy-in", "guestfiles/sudoers:/etc/",
-            "--copy-in", "guestfiles/01-netcfg.yaml:/etc/netplan/",
+            "--copy-in", f"{netplan_config_file}:/etc/netplan/",
             "--run-command", "chown root:root /etc/netplan/01-netcfg.yaml",
             "--run-command", "chown root:root /etc/sudoers",
             "--run-command", "chown root:root /etc/systemd/system/first-boot-script.service",
@@ -138,6 +149,19 @@ class InstallVM(object):
 
         self.run(virt_install_cmd)
 
+
+    def gen_netplan_config(self, ip: str, dnsserver: str, gateway: str) -> str:
+        """
+        Generate a netplan configuration file for the VM.
+
+        Args:
+            ip: The IP address of the VM.
+            dnsserver: The DNS server to use.
+            gateway: The gateway to use.
+        """
+        env = Environment(loader=FileSystemLoader("libvirt/template"))
+        template = env.get_template("01-netcfg.yaml.j2")
+        return template.render(ip=ip, dnsserver=dnsserver, gateway=gateway)
 
     def gen_authorized_keys(self):
         """

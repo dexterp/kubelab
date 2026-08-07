@@ -8,11 +8,11 @@
   <bridge name='{{ bridge_name }}' stp='{{ bridge_stp | default("on") }}' delay='{{ bridge_delay | default("0") }}'/>
   <mac address='{{ mac_address }}'/>
   <domain name='{{ domain_name }}' localOnly='yes'/>
-  <ip address='{{ ip_address }}' netmask='{{ netmask }}'>
-    <dhcp>
-      <range start='{{ dhcp_range_start }}' end='{{ dhcp_range_end }}'/>
+  <dns>
 {% for host in hosts %}
-      <host name='{{ host.fqdn }}' ip='{{ host.ip }}' mac='{{ host.mac }}' />
-{% endfor %}  </dhcp>
-  </ip>
+    <host ip='{{ host.ip }}'>
+      <hostname>{{ host.name }}</hostname>
+    </host>
+{% endfor %}  </dns>
+  <ip address='{{ ip_address }}' netmask='{{ netmask }}' />
 </network>
