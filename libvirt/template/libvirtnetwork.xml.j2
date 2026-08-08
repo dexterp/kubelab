@@ -6,7 +6,8 @@
     </nat>
   </forward>
   <bridge name='{{ bridge_name }}' stp='{{ bridge_stp | default("on") }}' delay='{{ bridge_delay | default("0") }}'/>
-  <mac address='{{ mac_address }}'/>
+{% if mac_address is defined %}
+  <mac address='{{ mac_address }}'/>{% endif %}
   <domain name='{{ domain_name }}' localOnly='yes'/>
   <dns>
 {% for host in hosts %}

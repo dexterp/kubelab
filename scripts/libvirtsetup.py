@@ -228,8 +228,6 @@ def generate_network(
             "bridge_stp": network["bridge"]["stp"],
             "bridge_delay": network["bridge"]["delay"],
 
-            "mac_address": network["mac"],
-
             "ip_address": network["ip"]["address"],
             "netmask": network["ip"]["netmask"],
 
@@ -268,7 +266,6 @@ def generate_domains(
             context={
                 "name": host["name"],
                 "ip": host["ip"],
-                "mac": host["mac"],
                 "mem_size": host["mem_size"],
                 "mem_cur_size": host["mem_cur_size"],
                 "vcpu_count": host["vcpu_count"],
@@ -436,13 +433,12 @@ def virt_install(
     for host in config["hosts"]:
         ip = host["ip"]
         name = host["name"]
-        mac_address = host["mac"]
         mem_size = host["mem_size"]
         vcpu_count = host["vcpu_count"]
         os_id = host["os_id"]
         src_image = host["src_image"]
 
-        install_vm.install(name, src_image, ip, netip, netip, mac_address=mac_address, mem_size=mem_size, vcpu_count=vcpu_count, os_id=os_id, user=os.environ["USER"], home=f"/home/{os.environ['USER']}", network=network, password=password)
+        install_vm.install(name, src_image, ip, netip, netip, mac_address=None, mem_size=mem_size, vcpu_count=vcpu_count, os_id=os_id, user=os.environ["USER"], home=f"/home/{os.environ['USER']}", network=network, password=password)
 
 def domain_exists(name: str) -> bool:
     try:

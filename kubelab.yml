@@ -7,7 +7,6 @@ network:
     name: kubelab
     stp: "on"
     delay: 0
-  mac: "52:54:00:00:00:00"
   ip:
     address: 192.168.115.1
     netmask: 255.255.255.0
@@ -36,7 +35,6 @@ hosts:
   - name: control1
     fqdn: control1.dev.site
     ip: 192.168.115.11
-    mac: 52:54:00:19:20:d1
     mem_size: 4096
     mem_cur_size: 4
     vcpu_count: "2"
@@ -51,7 +49,6 @@ hosts:
     ansible_group: control
     fqdn: control2.dev.site
     ip: 192.168.115.12
-    mac: 52:54:00:43:b1:3b
     mem_size: 4096
     mem_cur_size: 4
     vcpu_count: "2"
@@ -65,7 +62,6 @@ hosts:
   - name: control3
     fqdn: control3.dev.site
     ip: 192.168.115.13
-    mac: 52:54:00:f2:cc:58
     mem_size: 4096
     mem_cur_size: 4
     vcpu_count: "2"
@@ -79,7 +75,6 @@ hosts:
   - name: worker1
     fqdn: worker1.dev.site
     ip: 192.168.115.21
-    mac: 52:54:00:3b:86:4d
     mem_size: 8192
     mem_cur_size: 8
     vcpu_count: 4
@@ -93,7 +88,6 @@ hosts:
   - name: worker2
     fqdn: worker2.dev.site
     ip: 192.168.115.22
-    mac: 52:54:00:4c:05:e6
     mem_size: 8192
     mem_cur_size: 8
     vcpu_count: 4
@@ -107,7 +101,6 @@ hosts:
   - name: worker3
     fqdn: worker3.dev.site
     ip: 192.168.115.23
-    mac: 52:54:00:11:55:0f
     mem_size: 8192
     mem_cur_size: 8
     vcpu_count: 4
@@ -121,7 +114,6 @@ hosts:
   - name: worker4
     fqdn: worker4.dev.site
     ip: 192.168.115.24
-    mac: 52:54:00:ff:69:4d
     mem_size: 8192
     mem_cur_size: 8
     vcpu_count: 4
@@ -135,7 +127,6 @@ hosts:
   - name: kubelb1
     fqdn: kubelb1.dev.site
     ip: 192.168.115.31
-    mac: 52:54:00:8f:bc:66
     mem_size: 8192
     mem_cur_size: 8
     vcpu_count: 1
@@ -152,7 +143,6 @@ hosts:
   - name: kubelb2
     fqdn: kubelb2.dev.site
     ip: 192.168.115.32
-    mac: 52:54:00:2e:7a:20
     mem_size: 8192
     mem_cur_size: 8
     vcpu_count: 1
