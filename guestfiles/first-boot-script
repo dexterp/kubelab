@@ -7,12 +7,21 @@ resize2fs /dev/vda1
 apt update --yes
 
 # Install ssh early
-apt install --yes ssh
+apt install --yes openssh-server
+# Workaround Ubuntu 26.04 ssh server not starting
+rm -f /etc/ssh/ssh_host_*
+ssh-keygen -A
+
 perl -pi -e 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-systemctl restart ssh
+systemctl enable ssh
+systemctl start ssh
 
 # Install tools
-apt install --yes plocate
+apt install --yes \
+  net-tools \
+  plocate \
+  strace \
+  tcpdump
 
 touch /usr/local/sbin/first-boot-script.done
 chmod -x /usr/local/sbin/first-boot-script

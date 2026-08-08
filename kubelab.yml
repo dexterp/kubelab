@@ -41,7 +41,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: control1.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: control
 
@@ -55,7 +55,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: control2.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: control
 
@@ -68,7 +68,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: control3.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: control
 
@@ -81,7 +81,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: worker1.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: worker
 
@@ -94,7 +94,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: worker2.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: worker
 
@@ -107,7 +107,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: worker3.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: worker
 
@@ -120,7 +120,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: worker4.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: worker
 
@@ -133,7 +133,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: kubelb1.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: lb
       vars:
@@ -149,7 +149,7 @@ hosts:
     os_id: ubuntu-lts-latest
     vol_pool: default
     vol_name: kubelb2.qcow2
-    src_image: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    src_image: https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
     ansible:
       group: lb
       vars:
