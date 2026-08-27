@@ -28,11 +28,16 @@
 - name: Apt Install - iproute2 python3-backoff python3-docopt
   apt:
     name:
-      - at
       - iproute2
       - python3-backoff
       - python3-docopt
     state: latest
+
+- name: Apt Install - at
+  apt:
+    name: at
+    state: latest
+  notify: Restart - atd
 
 - name: Atd daemon
   service:
