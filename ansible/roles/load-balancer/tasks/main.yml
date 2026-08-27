@@ -6,6 +6,7 @@
     name:
       - keepalived
     state: latest
+    lock_timeout: "{{ apt_package_timeout }}"
 
 - name: keepalived ipvs config - keepalived.conf
   template:

@@ -67,6 +67,7 @@
 - name: Update apt cache
   apt:
     update_cache: true
+    lock_timeout: "{{ apt_package_timeout }}"
   when: apt_repository_file.changed
 
 - name: Install containerd
@@ -75,6 +76,7 @@
       - "runc"
       - "containerd"
     state: present
+    lock_timeout: "{{ apt_package_timeout }}"
   notify:
     - Restart - containerd
 
@@ -85,6 +87,7 @@
       - "kubeadm"
       - "kubelet"
       - "cri-tools"
+    lock_timeout: "{{ apt_package_timeout }}"
 
 - name: Install /etc/crictl.yaml
   copy:
@@ -136,3 +139,4 @@
   apt:
     name: helm
     state: present
+    lock_timeout: "{{ apt_package_timeout }}"

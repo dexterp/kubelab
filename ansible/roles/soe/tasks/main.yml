@@ -32,11 +32,13 @@
       - python3-backoff
       - python3-docopt
     state: latest
+    lock_timeout: "{{ apt_package_timeout }}"
 
 - name: Apt Install - at
   apt:
     name: at
     state: latest
+    lock_timeout: "{{ apt_package_timeout }}"
   notify: Restart - atd
 
 - name: Atd daemon

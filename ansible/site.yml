@@ -1,11 +1,15 @@
 - hosts: localhost
   gather_facts: false
+  vars:
+    apt_package_timeout: 300
   roles:
     - hostwait
     - role: soe
       become: true
 
 - hosts: all
+  vars:
+    apt_package_timeout: 300
   roles:
     - soe
 
