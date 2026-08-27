@@ -22,7 +22,7 @@
     - role: kube-control-plane
       when: "'control' in group_names"
 
-    - role: kube-config
+    - role: kube-ansible-controller
       when: "'control' in group_names"
 
     - role: kube-net
