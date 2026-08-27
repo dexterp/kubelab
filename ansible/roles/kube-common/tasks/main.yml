@@ -102,3 +102,37 @@
   service:
     name: containerd
     state: started
+
+# Helm repo
+- name: Add Helm apt key
+  shell:
+    cmd: curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor -o /etc/apt/keyrings/helm.gpg
+    creates: /etc/apt/keyrings/helm.gpg
+
+- name: Check Helm apt key
+  shell:
+    cmd: "gpg --no-default-keyring --keyring /etc/apt/keyrings/helm.gpg --with-colons --list-keys | grep -q '^fpr:::::::::{{ HELM_BUILDKITE_APT_KEY_ID }}:'"
+  vars:
+    HELM_BUILDKITE_APT_KEY_ID: DDF78C3E6EBB2D2CC223C95C62BA89D07698DBC6
+  register: helm_key_check
+  changed_when: false
+  failed_when: helm_key_check.rc != 0
+
+- name: Permissions Helm apt key
+  file:
+    path: /etc/apt/keyrings/helm.gpg
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add Helm apt repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main"
+    filename: helm-stable-debian
+    state: present
+    update_cache: true
+
+- name: Install Helm
+  apt:
+    name: helm
+    state: present
