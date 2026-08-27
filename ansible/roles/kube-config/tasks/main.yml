@@ -1,0 +1,81 @@
+---
+- name: Create apt keyrings directory on controller
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  delegate_to: localhost
+  run_once: true
+
+- name: Add Kubernetes apt key on controller
+  shell:
+    cmd: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: true
+  delegate_to: localhost
+  run_once: true
+
+- name: Add Kubernetes apt repository on controller
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /"
+    filename: kubernetes
+    state: present
+  become: true
+  delegate_to: localhost
+  run_once: true
+
+- name: Add Helm apt key on controller
+  shell:
+    cmd: curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor -o /etc/apt/keyrings/helm.gpg
+    creates: /etc/apt/keyrings/helm.gpg
+  become: true
+  delegate_to: localhost
+  run_once: true
+
+- name: Check Helm apt key on controller
+  shell:
+    cmd: "gpg --no-default-keyring --keyring /etc/apt/keyrings/helm.gpg --with-colons --list-keys | grep -q '^fpr:::::::::{{ HELM_BUILDKITE_APT_KEY_ID }}:'"
+  vars:
+    HELM_BUILDKITE_APT_KEY_ID: DDF78C3E6EBB2D2CC223C95C62BA89D07698DBC6
+  register: helm_key_check
+  changed_when: false
+  failed_when: helm_key_check.rc != 0
+  become: true
+  delegate_to: localhost
+  run_once: true
+
+- name: Add Helm apt repository on controller
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main"
+    filename: helm-stable-debian
+    state: present
+  become: true
+  delegate_to: localhost
+  run_once: true
+
+- name: Config - kubectl directory on controller
+  file:
+    path: "{{ lookup('env', 'HOME') }}/.kube"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  run_once: true
+
+- name: Fetch admin kubeconfig from seedmaster
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+    flat: true
+  delegate_to: "{{ seedmaster }}"
+  run_once: true
+
+- name: Secure controller kubeconfig
+  file:
+    dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+    state: file
+    mode: "0600"
+  delegate_to: localhost
+  run_once: true

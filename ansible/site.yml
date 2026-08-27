@@ -22,6 +22,9 @@
     - role: kube-control-plane
       when: "'control' in group_names"
 
+    - role: kube-config
+      when: "'control' in group_names"
+
     - role: kube-net
       when: "'control' in group_names"
 
