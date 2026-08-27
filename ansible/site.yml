@@ -2,6 +2,8 @@
   gather_facts: false
   roles:
     - hostwait
+    - role: soe
+      become: true
 
 - hosts: all
   roles:

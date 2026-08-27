@@ -4,6 +4,7 @@
   wait_for:
     path: /usr/local/sbin/first-boot-script.done
     state: present
+  when: inventory_hostname != 'localhost'
 
 #
 # All Users here
@@ -12,12 +13,14 @@
   user:
     name: root
     password: "*"
+  when: inventory_hostname != 'localhost'
 
 - name: User - kubectl
   user:
     name: kubectl
     uid: 800
     system: True
+  when: inventory_hostname != 'localhost'
 
 #
 # Deb Installations
@@ -47,6 +50,7 @@
 - name: Hostname - system hostname
   hostname:
     name: "{{ inventory_hostname }}"
+  when: inventory_hostname != 'localhost'
 
   # Ansible generated files. Doesn't really belong here but SOE should be everywhere
 - name: Ansible generated - Location for Ansible generated files
