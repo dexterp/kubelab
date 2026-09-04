@@ -33,13 +33,18 @@ from lib.install_vm import InstallVM
 from lib.inject import Inject
 
 import hashlib
+import io
+import multiprocessing
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import yaml
+from contextlib import redirect_stderr, redirect_stdout
 from docopt import docopt
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from urllib.parse import urlparse
@@ -430,15 +435,75 @@ def virt_install(
 ):
     network = config["network"]["name"]
     netip = config["network"]["ip"]["address"]
-    for host in config["hosts"]:
-        ip = host["ip"]
-        name = host["name"]
-        mem_size = host["mem_size"]
-        vcpu_count = host["vcpu_count"]
-        os_id = host["os_id"]
-        src_image = host["src_image"]
+    lock = multiprocessing.Lock()
 
-        install_vm.install(name, src_image, ip, netip, netip, mac_address=None, mem_size=mem_size, vcpu_count=vcpu_count, os_id=os_id, user=os.environ["USER"], home=f"/home/{os.environ['USER']}", network=network, password=password)
+    install_args = [
+        (
+            host,
+            netip,
+            network,
+            password,
+        )
+        for host in config["hosts"]
+    ]
+
+    # Use multiprocessing to install VMs in parallel
+    with multiprocessing.Pool(initializer=_install_vm_host_init, initargs=(install_vm, lock,)) as pool:
+        pool.map(_install_vm_host, install_args)
+
+
+def _install_vm_host_init(install_vm, lock):
+    global _install_vm, _lock
+    _install_vm = install_vm
+    _lock = lock
+
+def _install_vm_host(args):
+    host, netip, network, password = args
+    user = os.environ["USER"]
+    output = io.StringIO()
+
+    try:
+        with redirect_stdout(output), redirect_stderr(output):
+            _install_vm.install(
+                host["name"],
+                host["src_image"],
+                host["ip"],
+                netip,
+                netip,
+                mac_address=None,
+                mem_size=host["mem_size"],
+                vcpu_count=host["vcpu_count"],
+                os_id=host["os_id"],
+                user=user,
+                home=f"/home/{user}",
+                network=network,
+                password=password,
+            )
+    except Exception as error:
+        _lock.acquire()
+        try:
+            print(f"VM installation failed for {host['name']}: {error}")
+            print(output.getvalue())
+            sys.stdout.flush()
+        finally:
+            _lock.release()
+
+        return {
+            "name": host["name"],
+            "error": str(error),
+        }
+
+    _lock.acquire()
+    try:
+        print(f"VM installation completed for {host['name']}")
+        sys.stdout.flush()
+    finally:
+        _lock.release()
+
+    return {
+        "name": host["name"],
+        "error": None,
+    }
 
 def domain_exists(name: str) -> bool:
     try:
@@ -524,47 +589,57 @@ def remove(config_path: Path):
 #
 
 def main():
-    args = docopt(__doc__)
+    start_time = datetime.now()
+    start_clock = time.monotonic()
+    print(f"Script started: {start_time.isoformat(timespec='seconds')}")
 
-    global quiet
-    quiet = args["--quiet"]
+    try:
+        args = docopt(__doc__)
 
-    inject = Inject()
+        global quiet
+        quiet = args["--quiet"]
 
-    if args["net"]:
-        generate_network(
-            config_path=Path(args["--config"]),
-            template_path=Path(args["--net-template"]),
-            output_path=Path(args["--output"]),
-        )
+        inject = Inject()
 
-    elif args["domain"]:
-        generate_domains(
-            config_path=Path(args["--config"]),
-            template_path=Path(args["--dom-template"]),
-            output_dir=Path(args["--dir"]),
-        )
+        if args["net"]:
+            generate_network(
+                config_path=Path(args["--config"]),
+                template_path=Path(args["--net-template"]),
+                output_path=Path(args["--output"]),
+            )
 
-    elif args["installdisk"]:
-        install_disk(
-            config_path=Path(args["--config"]),
-            cache_dir=Path(args["--cache-dir"]),
-        )
-    
-    elif args["start"]:
-        start(
-            config_path=Path(args["--config"]),
-            dom_template_path=Path(args["--dom-template"]),
-            net_template_path=Path(args["--net-template"]),
-            install_vm=inject.InstallVM(),
-            password=args["--password"]
-        )
-    elif args["shutdown"]:
-        shutdown(config_path=Path(args["--config"]))
-    elif args["remove"]:
-        confirm = input("Are you sure you want to remove all domains and network? (y/n): ")
-        if confirm.lower() == "y":
-            remove(config_path=Path(args["--config"]))
+        elif args["domain"]:
+            generate_domains(
+                config_path=Path(args["--config"]),
+                template_path=Path(args["--dom-template"]),
+                output_dir=Path(args["--dir"]),
+            )
+
+        elif args["installdisk"]:
+            install_disk(
+                config_path=Path(args["--config"]),
+                cache_dir=Path(args["--cache-dir"]),
+            )
+
+        elif args["start"]:
+            start(
+                config_path=Path(args["--config"]),
+                dom_template_path=Path(args["--dom-template"]),
+                net_template_path=Path(args["--net-template"]),
+                install_vm=inject.InstallVM(),
+                password=args["--password"]
+            )
+        elif args["shutdown"]:
+            shutdown(config_path=Path(args["--config"]))
+        elif args["remove"]:
+            confirm = input("Are you sure you want to remove all domains and network? (y/n): ")
+            if confirm.lower() == "y":
+                remove(config_path=Path(args["--config"]))
+    finally:
+        end_time = datetime.now()
+        elapsed_time = time.monotonic() - start_clock
+        print(f"Script ended: {end_time.isoformat(timespec='seconds')}")
+        print(f"Time taken: {elapsed_time:.2f} seconds")
 
 def fail(msg):
     print(f"Error: {msg}", file=sys.stderr)

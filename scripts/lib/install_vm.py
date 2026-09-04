@@ -15,7 +15,25 @@ class InstallVM(object):
         self._image_dir = image_dir
 
     def run(self, cmd):
-        subprocess.run(cmd, check=True)
+        result = subprocess.run(
+            cmd,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.stdout:
+            print(result.stdout, end="")
+        if result.stderr:
+            print(result.stderr, end="", file=sys.stderr)
+
+        if result.returncode != 0:
+            raise subprocess.CalledProcessError(
+                result.returncode,
+                cmd,
+                output=result.stdout,
+                stderr=result.stderr,
+            )
 
 
     def check_kernel_permissions(self):
