@@ -61,6 +61,9 @@ vmremove: ## Remove virtual guests
 play: ansible/inventory ## Run ansible playbook on virtual guests
 	@cd ansible && ansible-playbook -i inventory site.yml
 
+playlab: ansible/inventory ## Run ansible lab playbook
+	@cd ansible && ansible-playbook -i inventory site-lab.yml
+
 permissions: # Fix permissions on vmlinuz for non-root users
 	@sudo chmod g+r /boot/vmlinuz-$(shell uname -r) 
 	@sudo setfacl -m u:$(CURUSER):r /boot/vmlinuz-$(shell uname -r)

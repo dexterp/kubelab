@@ -1,0 +1,5 @@
+- hosts: control:worker
+  vars:
+    apt_package_timeout: 300
+  roles:
+    - role: lab

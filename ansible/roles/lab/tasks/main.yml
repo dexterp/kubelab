@@ -1,0 +1,49 @@
+---
+- name: Install git
+  apt:
+    name: git
+    state: present
+    update_cache: true
+    lock_timeout: "{{ apt_package_timeout }}"
+  become: true
+
+- name: Clone CKA training repository
+  git:
+    repo: "{{ lab_repository }}"
+    dest: "{{ lab_repository_destination }}"
+    accept_newhostkey: true
+  become: true
+
+- name: Check for admin kubeconfig on control plane
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: admin_kubeconfig
+  delegate_to: "{{ lab_control_plane_host }}"
+  become: true
+  run_once: true
+
+- name: Copy admin kubeconfig to local machine
+  block:
+    - name: Create local kubectl directory
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.kube"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+
+    - name: Fetch admin kubeconfig
+      fetch:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+        flat: true
+      delegate_to: "{{ lab_control_plane_host }}"
+      become: true
+
+    - name: Secure local kubeconfig
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.kube/config"
+        state: file
+        mode: "0600"
+      delegate_to: localhost
+  when: admin_kubeconfig.stat.exists
+  run_once: true

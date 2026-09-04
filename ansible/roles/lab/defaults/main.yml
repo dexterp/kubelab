@@ -1,0 +1,4 @@
+---
+lab_repository: https://github.com/sandervanvugt/cka.git
+lab_repository_destination: /root/cka
+lab_control_plane_host: control1.dev.site
